@@ -2,6 +2,7 @@
   Export-Package.ps1 - 다른 PC/다른 사람에게 넘길 배포본을 만든다.
 
     .\Export-Package.ps1                        바탕화면에 kakao-relay-setup 폴더로
+    .\Export-Package.ps1                        dist\ 에 만든다 (기본)
     .\Export-Package.ps1 -Destination D:\share  지정한 경로로
     .\Export-Package.ps1 -Zip                   zip 으로 압축까지
 
@@ -24,7 +25,12 @@ param(
 $ErrorActionPreference = 'Stop'
 
 if (-not $Destination) {
-    $Destination = Join-Path ([Environment]::GetFolderPath('Desktop')) 'kakao-relay-setup'
+    <#
+      배포본은 프로젝트 안 dist 폴더에 만든다.
+      예전에는 바탕 화면에 떨어뜨렸는데, 배포처가 GitHub Releases 로 바뀐 뒤로는
+      만들자마자 올리고 끝이라 바탕 화면에 남길 이유가 없다. dist 는 git 이 무시한다.
+    #>
+    $Destination = Join-Path $PSScriptRoot 'dist\kakao-relay-setup'
 }
 
 # 최상위에 보일 것 / program 으로 내릴 것 / 아예 넘기지 않을 것
