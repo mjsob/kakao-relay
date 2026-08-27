@@ -1,5 +1,8 @@
 # 카톡 릴레이
 
+[![다운로드](https://img.shields.io/github/v/release/mjsob/kakao-relay?label=%EB%82%B4%EB%A0%A4%EB%B0%9B%EA%B8%B0&color=FEE500&labelColor=1A1500)](https://github.com/mjsob/kakao-relay/releases/latest/download/kakao-relay-setup.zip)
+[![설치 가이드](https://img.shields.io/badge/%EC%84%A4%EC%B9%98%20%EA%B0%80%EC%9D%B4%EB%93%9C-%EB%B3%B4%EA%B8%B0-8A5A00)](https://claude.ai/code/artifact/cb5553e1-f521-4090-828f-b68b28bc5559)
+
 앱을 설치할 수 없는 휴대폰에서 **문자를 보내면, PC의 카카오톡이 대신 그 내용을 전송합니다.**
 
 손에 든 폰으로는 문자만 보내고
@@ -17,7 +20,8 @@
 **[설치 가이드](https://claude.ai/code/artifact/cb5553e1-f521-4090-828f-b68b28bc5559)** 를 따라가면 됩니다.
 PC와 휴대폰 양쪽 설정이 모두 들어 있습니다.
 
-내려받을 파일은 [Releases](../../releases) 에 있습니다.
+**[kakao-relay-setup.zip 내려받기](https://github.com/mjsob/kakao-relay/releases/latest/download/kakao-relay-setup.zip)**
+
 압축을 풀고 `KakaoRelay.bat` 을 실행한 뒤 **설치하기** 를 누르면 됩니다.
 
 ## 문자 보내는 방법
