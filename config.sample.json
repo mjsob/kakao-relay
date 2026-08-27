@@ -1,0 +1,47 @@
+{
+  "_설명": "새 PC용 설정 템플릿. Setup.ps1 이 이 파일을 바탕으로 config.json 을 만든다.",
+  "port": 8787,
+  "_comment_requirePassword": "false 면 문자 앞 비밀번호를 생략한다. 발신번호+IP 화이트리스트만으로 보호된다.",
+  "requirePassword": false,
+  "password": "CHANGE_ME",
+  "_comment_allowFrom": "허용할 발신자. 전화번호 또는 연락처 이름. 알림 트리거는 번호를 못 보내므로 이름을 쓴다.",
+  "allowFrom": [
+    "010-0000-0000"
+  ],
+  "_comment_allowIPs": "접속 허용 IP. Setup.ps1 이 이 PC의 LAN 대역으로 자동 설정한다.",
+  "allowIPs": [
+    "127.0.0.1"
+  ],
+  "_comment_aliases": "문자에 쓸 짧은 별칭 -> 실제 카톡 채팅방 이름",
+  "aliases": {},
+  "defaultRoom": null,
+  "sendMode": "replacesel",
+  "sendMethod": "auto",
+  "autoOpen": true,
+  "rowOffsets": [
+    20,
+    30,
+    50,
+    62,
+    88,
+    100,
+    124,
+    150
+  ],
+  "sendButton": [
+    58,
+    29
+  ],
+  "closeAfterSend": true,
+  "hideMainAfterSend": true,
+  "dedupeSeconds": 300,
+  "retryCount": 2,
+  "retryDelayMs": 1500,
+  "windowMode": "tray",
+  "watchdogStartKakao": false,
+  "dryRun": true,
+  "_comment_logRawBody": "true 면 폰에서 받은 본문을 로그에 그대로 남긴다. 문제 추적할 때만.",
+  "logRawBody": false,
+  "_comment_joinWindowMs": "장문이 여러 통으로 쪼개져 올 때 이어붙일 대기 시간(ms). 0 이면 끔.",
+  "joinWindowMs": 0
+}
