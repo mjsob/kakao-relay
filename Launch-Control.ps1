@@ -414,10 +414,15 @@ function New-ToolButton([string]$Text, [int]$X, [int]$W) {
 }
 $colL = $L.Pad
 $colR = $L.Pad + $L.Half + $L.GapS
-$btnCheck = New-ToolButton '점검하기'   $colL $L.Half
-$btnCfg   = New-ToolButton '설정 편집'  $colR $L.Half
-$btnLog   = New-ToolButton '기록 폴더 열기' $colL $L.Half
-$btnTerm  = New-ToolButton '실시간 보기' $colR $L.Half
+<#
+  버튼 이름은 네 개가 같은 형식이어야 한다.
+  전에는 '점검하기'(동사) '설정 편집'(명사) 가 섞여 있어 나란히 놓으면 결이 달랐다.
+  모두 두 낱말 명사구로 맞춘다.
+#>
+$btnCheck = New-ToolButton '상태 점검'   $colL $L.Half
+$btnCfg   = New-ToolButton '설정 편집'   $colR $L.Half
+$btnLog   = New-ToolButton '기록 폴더'   $colL $L.Half
+$btnTerm  = New-ToolButton '실시간 기록' $colR $L.Half
 
 # 위 버튼들과 다른 성격의 동작이라는 걸 선으로 갈라 놓는다
 $sep = New-Object System.Windows.Forms.Panel
@@ -450,7 +455,7 @@ $btnQuit.Visible = $false
 $form.Controls.Add($btnQuit)
 
 # 확인용 버튼 (중지 누르면 이 자리에 나타난다 - 팝업을 띄우지 않는다)
-$btnYes = New-FlatButton '네, 끝냅니다' 228 $false   # 실제 문구는 Show-QuitConfirm 이 덮어쓴다
+$btnYes = New-FlatButton '끝내기' 228 $false   # 실제 문구는 Show-QuitConfirm 이 덮어쓴다
 $btnYes.ForeColor = $C.Warn
 $btnYes.Bounds = New-Object System.Drawing.Rectangle($L.Pad,228,($L.Content - 130 - $L.GapS),$L.BtnH)
 $btnNo  = New-FlatButton '취소' 228 $false
@@ -586,8 +591,8 @@ function Sync-Ui {
     $script:mainAction = if ($s.HasTask) { 'start' } else { 'install' }
     if (-not $s.HasTask) {
         $script:dotColor = $C.Warn
-        $lblState.Text = '설치되지 않음'
-        $lblSub.Text   = '아래 버튼을 누르면 설치가 시작됩니다.'
+        $lblState.Text = '설치 전'
+        $lblSub.Text   = '설치에 1~2분이 걸립니다.'
         $lblHint.Text  = "설치에는 관리자 권한이 필요합니다.`r`n창이 뜨면 [예] 를 눌러 주세요."
         $btnMain.Text = '설치하기'
         $script:showMain = $true; $script:showStop = $false
@@ -603,7 +608,7 @@ function Sync-Ui {
     } elseif ($s.Running) {
         $script:dotColor = $C.Ok
         $lblState.Text = '전달 중'
-        $k = if ($s.Kakao -eq $true) { '카카오톡 연결됨' } elseif ($s.Kakao -eq $false) { '카카오톡이 꺼져 있어 전달 불가' } else { '' }
+        $k = if ($s.Kakao -eq $true) { '카카오톡 연결됨' } elseif ($s.Kakao -eq $false) { '카카오톡이 꺼져 있습니다' } else { '' }
         $u = Format-Uptime $s.Uptime
         $lblSub.Text = (@($k,$u) | Where-Object { $_ }) -join '  ·  '
         <#
@@ -630,17 +635,17 @@ function Sync-Ui {
         Set-Layout
     } elseif ($s.Stopped) {
         $script:dotColor = $C.Muted
-        $lblState.Text = '실행 중 아님'
+        $lblState.Text = '꺼짐'
         $lblSub.Text   = '릴레이가 실행되고 있지 않습니다.'
-        $lblHint.Text  = "컴퓨터를 다시 켜면 저절로 실행됩니다.`r`n지금 바로 쓰려면 아래 버튼을 누르세요."
+        $lblHint.Text  = '컴퓨터를 다시 켜면 저절로 실행됩니다.'
         $btnMain.Text = '지금 다시 실행'
         $script:showMain = $true; $script:showStop = $false
         Set-Layout
     } else {
         $script:dotColor = $C.Amber
-        $lblState.Text = '멈춤 (복구 중)'
+        $lblState.Text = '다시 켜는 중'
         $lblSub.Text   = '1분 안에 저절로 다시 켜집니다.'
-        $lblHint.Text  = '기다리기 싫으면 아래 버튼을 누르세요.'
+        $lblHint.Text  = '기다리는 동안 카카오톡은 그대로 두세요.'
         $btnMain.Text = '지금 켜기'
         $script:showMain = $true; $script:showStop = $false
         Set-Layout
@@ -714,8 +719,8 @@ $btnMain.Add_Click({
             $j | ConvertTo-Json -Depth 6 | Set-Content $cfgFile -Encoding UTF8 -ErrorAction Stop
         } catch {
             $script:dotColor = $C.Warn
-            $lblState.Text = '설정을 바꾸지 못했습니다'
-            $lblSub.Text   = '설정 파일을 확인해 주세요.'
+            $lblState.Text = '시험 모드를 끄지 못했습니다'
+            $lblSub.Text   = '설정 파일이 열려 있으면 닫고 다시 눌러 주세요.'
             $sdot.Invalidate(); $form.Refresh()
             return
         }
@@ -754,7 +759,7 @@ $btnMain.Add_Click({
     Sync-Ui
     if (-not (Get-State).Running) {
         $lblState.Text = '시작하지 못했습니다'
-        $lblSub.Text = '[점검하기] 로 확인해 보세요.'
+        $lblSub.Text = '[상태 점검] 을 눌러 원인을 확인하세요.'
         $script:dotColor = $C.Warn; $sdot.Invalidate()
     }
 })
@@ -857,7 +862,7 @@ function Show-QuitConfirm {
     $lblState.Text = '프로그램을 끝낼까요?'
     $lblSub.Text   = '작업 표시줄의 트레이 아이콘도 함께 사라집니다.'
     $lblHint.Text  = "컴퓨터를 다시 켜면 저절로 실행됩니다.`r`n그 전에 다시 쓰려면 바탕 화면의 [카톡 릴레이] 를 여세요."
-    $btnYes.Text = '네, 끝냅니다'
+    $btnYes.Text = '끝내기'
     Set-Layout -Confirm
 }
 $btnQuit.Add_Click({ Show-QuitConfirm })

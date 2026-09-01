@@ -1,4 +1,4 @@
-﻿<# 점검하기.bat 이 호출한다. #>
+﻿<# 조작 창의 [상태 점검] 이 호출한다. #>
 [Console]::OutputEncoding = [Text.Encoding]::UTF8
 & (Join-Path $PSScriptRoot 'Check-Ready.ps1')
 Write-Host ''

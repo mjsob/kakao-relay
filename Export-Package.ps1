@@ -48,7 +48,7 @@ $topLevel = @()
 #   Calibrate-Open   채팅방 목록 좌표를 다시 재는 도구. 기본값이 이미 맞춰져 있다
 #   Send-Test        원격 지원용. 필수 인자를 되묻는 데다 -Live 없이는 아무것도 보내지 않아
 #                    받는 사람이 우클릭으로 실행하면 오히려 헷갈린다
-#   Show-Rooms       열린 채팅방 목록. [점검하기] 가 같은 내용을 보여주므로 중복이다
+#   Show-Rooms       열린 채팅방 목록. [상태 점검] 이 같은 내용을 보여주므로 중복이다
 $exclude  = @('config.json', 'relay.log', 'watchdog.log', 'fail-shot.png',
               'README.md', '설치설명서.md', '설치설명서.html',
               'Modem-Ingest.ps1', 'Allow-Firewall.ps1', 'Export-Package.ps1',
@@ -78,7 +78,7 @@ foreach ($f in $topLevel) {
   무엇을 눌러야 하는지 알기 어렵고, 설치 전에는 넷 중 셋이 아무 일도 하지 못했다.
   조작 창이 설치 여부와 실행 상태를 모두 알고 있으므로 그 창에 전부 모았다.
     설치 전 -> [설치하기]
-    설치 후 -> [릴레이 켜기 / 끄기] [점검하기] [설정 편집] [프로그램 완전히 끝내기]
+    설치 후 -> [문자 전달 일시 중지 / 다시 시작] [상태 점검] [설정 편집] [프로그램 완전히 끝내기]
 #>
 $bats = @{
     'KakaoRelay.bat' = 'Launch-Control.ps1'

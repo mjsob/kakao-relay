@@ -559,7 +559,7 @@ $script:lastDryRoom = $null }
         $script:lastPaused = $p
         if ($p) {
             if ($script:trayIconOff) { $notify.Icon = $script:trayIconOff }
-            $notify.Text = '카톡 릴레이 - 일시 중지 (문자 전달 안 함)'
+            $notify.Text = '카톡 릴레이 - 일시 중지'
         } else {
             if ($script:trayIconOn) { $notify.Icon = $script:trayIconOn }
             $notify.Text = '카톡 릴레이 - 전달 중'
