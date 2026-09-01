@@ -3,10 +3,9 @@
 [![다운로드](https://img.shields.io/github/v/release/mjsob/kakao-relay?label=%EB%82%B4%EB%A0%A4%EB%B0%9B%EA%B8%B0&color=FEE500&labelColor=1A1500)](https://github.com/mjsob/kakao-relay/releases/latest/download/kakao-relay-setup.zip)
 [![설치 가이드](https://img.shields.io/badge/%EC%84%A4%EC%B9%98%20%EA%B0%80%EC%9D%B4%EB%93%9C-%EB%B3%B4%EA%B8%B0-8A5A00)](https://claude.ai/code/artifact/cb5553e1-f521-4090-828f-b68b28bc5559)
 
-앱을 설치할 수 없는 휴대폰에서 **문자를 보내면, PC의 카카오톡이 대신 그 내용을 전송합니다.**
+카카오톡을 쓸 수 없는 휴대폰에서 **문자를 보내면, PC의 카카오톡이 대신 그 내용을 전송합니다.**
 
-손에 든 폰으로는 문자만 보내고
-실제 대화는 PC 카카오톡으로 이어가려고 만들었습니다.
+손에 든 폰으로는 문자만 보내고, 실제 대화는 PC 카카오톡으로 이어가려고 만들었습니다.
 
 ```
 발신 휴대폰 ──문자──▶ 중계 휴대폰 ──Wi-Fi──▶ PC 릴레이 ──▶ 카카오톡
