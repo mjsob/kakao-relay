@@ -179,8 +179,19 @@ function Get-SenderKey {
 #>
 function Test-AllowedSender {
     param([string]$from)
+    <#
+      비어 있으면 전체 허용이다. 값을 지운 것을 '아무도 못 보낸다' 로 오해하기 쉬운데
+      실제로는 정반대라, 같은 공유기의 아무 기기나 문자를 밀어 넣을 수 있다.
+      조용히 넘기지 않고 기록에 남긴다.
+    #>
     $allow = @($cfg.allowFrom)
-    if ($allow.Count -eq 0) { return $true }   # 비어있으면 전체 허용
+    if ($allow.Count -eq 0) {
+        if (-not $script:warnedEmptyAllow) {
+            Write-Log 'allowFrom 이 비어 있어 모든 발신자를 허용합니다. 설정에 번호를 넣으세요.' 'WARN'
+            $script:warnedEmptyAllow = $true
+        }
+        return $true
+    }
     if (-not $from) { return $false }
 
     $n     = Normalize-Phone $from

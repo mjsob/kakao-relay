@@ -1003,12 +1003,12 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
         <li>
           <b>카카오톡 준비</b>
           <p>카카오톡을 실행해 로그인한 뒤 <b>자동 로그인</b>을 켜세요.</p>
-          <p>이어서 카카오톡 <b>설정 &gt; 개인/보안 &gt; 화면잠금</b>에서 화면잠금을 해제합니다.
+          <p>이어서 카카오톡 <b>설정 &gt; 개인/보안 &gt; 화면잠금</b>에서 화면잠금을 해제하세요.
             잠겨 있으면 릴레이가 메시지를 보내지 못합니다.</p>
         </li>
         <li>
           <b>KakaoRelay.bat 실행</b>
-          <p><code>KakaoRelay.bat</code>을 더블클릭하면 <b>조작 창</b>이 열립니다. <b>설치하기</b> 버튼을 누르세요. <span class="u">사용자 계정 컨트롤(UAC) 창</span>이 나타나면 <b>[예]</b> 버튼을 선택합니다.
+          <p><code>KakaoRelay.bat</code>을 더블클릭하면 <b>조작 창</b>이 열립니다. <b>설치하기</b> 버튼을 누르세요. <span class="u">사용자 계정 컨트롤(UAC) 창</span>이 나타나면 <b>[예]</b> 버튼을 선택하세요.
             방화벽 규칙을 추가하려면 관리자 권한이 필요합니다.</p>
           <p>설치 중 <b>발신 휴대폰의 전화번호</b>를 입력하라는 안내가 나오면 그 번호를 입력하세요.</p>
         </li>
@@ -1027,7 +1027,7 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
           </thead>
           <tbody>
             <tr><th scope="row"><code>KakaoRelay.bat</code></th><td>설치, 켜고 끄기, 점검, 설정 수정을 모두 이 창에서 합니다. 설치가 끝나면 바탕 화면에도 같은 바로가기가 생깁니다.</td></tr>
-            <tr><th scope="row"><code>program\</code></th><td>내부 파일과 로그 (문제를 해결할 때만 열어 봅니다)</td></tr>
+            <tr><th scope="row"><code>program\</code></th><td>내부 파일과 기록 (문제를 해결할 때만 열어 봅니다)</td></tr>
           </tbody>
         </table>
       </div>
@@ -1055,7 +1055,7 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
       </div>
 
       <h3>설치가 끝나면 나오는 IP 주소</h3>
-      <p>설치가 끝나면 <b>이 PC 의 IP 주소</b>가 화면에 표시되고,
+      <p>설치가 끝나면 <b>이 PC의 IP 주소</b>가 화면에 표시되고,
         압축을 푼 폴더의 <code>설치결과.txt</code>에도 저장되어 메모장으로 열립니다.
         <b>다음 단계에서 쓸 값은 이것 하나</b>이니 적어 두세요.</p>
 
@@ -1073,7 +1073,7 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
         <h2 id="s3h">연결 확인</h2>
       </div>
 
-      <p>휴대폰에서 무언가를 만들기 전에, <b>중계 휴대폰에서 PC 가 보이는지</b> 30초 만에 확인합니다.
+      <p>휴대폰에서 무언가를 만들기 전에, <b>중계 휴대폰에서 PC가 보이는지</b> 30초 만에 확인합니다.
         여기가 안 되면 뒤 단계를 다 해도 소용이 없습니다.</p>
       <p>중계 휴대폰의 브라우저에서 아래 주소로 접속하세요.</p>
       <div class="codewrap">
@@ -1085,8 +1085,11 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
         <li>중계 휴대폰과 PC가 같은 Wi-Fi 네트워크에 연결되어 있는지 확인하세요.
           공유기가 <span class="u">2.4GHz와 5GHz</span>를 서로 다른 네트워크로 나누어 두었다면 연결되지 않습니다.</li>
         <li><b>상태 점검</b>을 눌러 <b>방화벽 인바운드</b> 항목이 정상인지 확인하세요.
-          규칙이 없다고 나오면 <code>KakaoRelay.bat</code>을 다시 열고 <b>설치하기</b>를 한 번 더 누르세요.
-          권한 창이 나타나면 <b>[예]</b>를 선택합니다. 기존 설정은 그대로 남습니다.</li>
+          규칙이 없다고 나오면 <code>program</code> 폴더의 <code>Setup.ps1</code>을
+          <b>마우스 오른쪽 버튼 클릭 &gt; PowerShell로 실행</b>하세요.
+          권한 창이 나타나면 <b>[예]</b>를 선택하세요.
+          이미 설치를 마친 뒤에는 조작 창에 <b>설치하기</b> 버튼이 나오지 않으므로 이 방법을 씁니다.
+          기존 설정은 덮어쓰지 않습니다.</li>
         <li><code>접속 거부</code>라는 응답이 표시되면 PC까지는 닿았지만 IP가 허용 목록에 없는 상태입니다.
           <a href="#s9">09 문제 해결</a>을 참고해 <code>allowIPs</code>를 수정하세요.</li>
       </ul>
@@ -1119,10 +1122,10 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
             <b>백업 · 복원</b>으로 들어가 <b>업로드</b>를 누릅니다.
             구글 드라이브 쪽이 아니라 <b>휴대폰 안의 파일</b>을 고르는 항목을 찾아 다운로드 폴더의 파일을 고르세요.</p>
           <p>이름은 업로드지만 <b>인터넷에 올리는 것이 아니라 이 휴대폰 안으로 가져오는 것</b>입니다.</p>
-          <p>매크로 목록에 <b>카톡 릴레이 (IP·발신번호 수정 필요)</b>가 생기면 된 것입니다.</p>
+          <p>매크로 목록에 <b>카톡 릴레이 (IP·발신번호 수정 필요)</b>가 생겼으면 성공입니다.</p>
         </li>
         <li><b>IP 주소 고치기</b>
-          <p>그 매크로를 열고 <b>HTTP 요청</b> 액션을 누른 뒤, URL 의 IP 주소를 내 PC 주소로 바꾸세요.
+          <p>그 매크로를 열고 <b>HTTP 요청</b> 액션을 누른 뒤, URL의 IP 주소를 내 PC 주소로 바꾸세요.
             숫자 네 덩어리만 바꾸고 앞뒤 <code>http://</code>와 <code>:8787/sms?...</code>는 글자 하나 건드리지 마세요.</p>
           <p>넣을 주소는 <a href="#s3">03 연결 확인</a>에서 접속했던 그 주소입니다.
             모르겠으면 PC 조작 창의 <b>상태 점검</b>에 나오는 <b>LAN IP</b>를 보세요.</p>
@@ -1142,7 +1145,7 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
         <li><b>저장하고 켜기</b>
           <p>트리거와 액션 창에서 누르는 <b>확인</b>과, 매크로 전체를 저장하는 <b>저장</b>은 다릅니다.
             고친 뒤 오른쪽 위 <b>저장</b>까지 눌러야 반영됩니다. 저장하지 않고 뒤로 가면 고친 것이 사라집니다.</p>
-          <p>매크로 목록에서 스위치가 <b>켜짐</b>인지 확인합니다.
+          <p>매크로 목록에서 스위치가 <b>켜짐</b>인지 확인하세요.
             다 고쳤으면 매크로 이름은 편한 대로 바꾸어도 됩니다.</p>
         </li>
         <li><b>권한 허용</b>
@@ -1153,14 +1156,14 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
           <p>휴대폰 <b>설정</b>을 열고 위쪽 돋보기에 <b>배터리</b>를 검색하세요.
             앱별 절전 목록(제조사에 따라 <b>앱 절전 관리</b>, <b>배터리 사용량 최적화</b> 등으로 부릅니다)에서
             <b>MacroDroid</b>를 찾아 <b>제한 안 함</b>으로 두세요.
-            이걸 안 하면 몇 시간 뒤에 저절로 멈춥니다.</p>
+            이 설정을 하지 않으면 몇 시간 뒤에 저절로 멈춥니다.</p>
           <p>중계 휴대폰은 충전기를 연결해 항상 켜 둡니다.</p>
         </li>
       </ol>
 
       <div class="cal cal--tip">
         <b class="cal-h">이 매크로가 하는 일</b>
-        <p>문자가 오면 그 내용을 PC 로 넘기고, 릴레이가 돌려준 답을 다시 문자로 보내 줍니다.
+        <p>문자가 오면 그 내용을 PC로 넘기고, 릴레이가 돌려준 답을 다시 문자로 보내 줍니다.
           대상을 바꿨거나 전달에 실패했을 때만 답장이 오고, 잘 전달되면 아무것도 오지 않습니다.
           답장 한 통마다 문자 요금이 듭니다.</p>
         <p>답장이 필요 없으면 <a href="#s11">11 설정 바꾸기</a>에서 끌 수 있습니다.
@@ -1171,7 +1174,7 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
 
       <div class="cal cal--warn">
         <b class="cal-h">장문(MMS)과 사진은 전달되지 않습니다.</b>
-        <p>국내에서는 글자 수가 조금만 넘어가도 MMS 로 바뀌는데, 이 매크로는 MMS 를 감지하지 못합니다.
+        <p>국내에서는 글자 수가 조금만 넘어가도 MMS로 바뀌는데, 이 매크로는 MMS를 감지하지 못합니다.
           짧게 나누어 보내세요. 자세한 것은 <a href="#s10">10 안 되는 것</a>에 있습니다.</p>
       </div>
     </section>
@@ -1189,7 +1192,8 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
       <div class="cal cal--must">
         <b class="cal-h">이 단계를 건너뛰면 모든 문자가 차단됩니다.</b>
         <p>릴레이는 <code>allowFrom</code>에 적힌 상대의 문자만 전달합니다.
-          여기에 아무것도 없거나 값이 틀리면, 문자를 아무리 보내도 조용히 거부됩니다.</p>
+          값이 틀리면 문자를 아무리 보내도 조용히 거부됩니다.</p>
+        <p>반대로 <b>비워 두면 모든 발신자가 허용됩니다.</b> 절대 비워 두지 마세요.</p>
       </div>
 
       <p><a href="#s2">02 PC에 설치하기</a>에서 넣은 번호가 여기에 이미 들어가 있습니다.
@@ -1225,7 +1229,7 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
         <b class="cal-h">카카오톡에서 <span class="u">채팅방을 새 창으로 열기</span>를 켜 두세요.</b>
         <p>카카오톡 <b>설정 &gt; 채팅</b>에서 켤 수 있습니다.</p>
         <p>릴레이는 채팅방이 새 창으로 열릴 때 <b>창 제목을 확인해 올바른 방인지 대조</b>합니다.
-          이 설정이 꺼져 있으면 대화가 메인 창 안에서 열려 제목을 확인할 수 없고,
+          이 설정이 꺼져 있으면 대화가 메인창 안에서 열려 제목을 확인할 수 없고,
           이름이 비슷한 다른 채팅방으로 전송될 수 있습니다.</p>
       </div>
 
@@ -1236,19 +1240,13 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
           <b>설정 편집</b>을 누르면 버튼 이름이 <b>설정 적용</b>으로 바뀌어 있습니다.</p>
       </div>
 
-      <h3>채팅방 이름이 길거나 띄어쓰기가 있다면<span class="tag tag--opt">선택</span></h3>
-      <p>문자는 <b>맨 처음 띄어쓰기</b>까지를 채팅방 이름으로 읽습니다.
-        그래서 <code>개발팀 단톡방</code>처럼 이름에 띄어쓰기가 있으면 그대로는 찾지 못합니다.
-        짧은 이름을 따로 정해 두면 편합니다.</p>
-      <div class="codewrap">
-<pre>"aliases": {
-  "팀": "개발팀 단톡방",
-  "엄마": "김영희"
-}</pre>
+      <div class="cal cal--tip">
+        <b class="cal-h">채팅방 이름에 띄어쓰기가 있다면 짧은 이름을 정해 두세요.</b>
+        <p>문자는 <b>맨 처음 띄어쓰기</b>까지를 채팅방 이름으로 읽습니다.
+          그래서 <code>개발팀 단톡방</code>처럼 이름에 띄어쓰기가 있으면 그대로는 찾지 못합니다.
+          <a href="#s11">11 설정 바꾸기</a>의 <b>채팅방 별칭</b>에서 짧은 이름을 정할 수 있습니다.
+          지금 하지 않아도 됩니다.</p>
       </div>
-      <p>왼쪽이 <b>문자에 쓸 짧은 이름</b>, 오른쪽이 <b>카카오톡에 보이는 실제 채팅방 이름</b>입니다.
-        실제 이름은 띄어쓰기와 이모지까지 화면에 보이는 그대로여야 합니다.
-        이렇게 해 두면 <code>팀 회의합니다</code>로 보낼 수 있습니다.</p>
 
       <div class="cal cal--tip">
         <b class="cal-h">보낼 채팅방 이름을 미리 확인해 두세요.</b>
@@ -1284,7 +1282,7 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
           </div>
         </li>
         <li>
-          <b>로그 확인</b>
+          <b>기록 확인</b>
           <p>조작 창에서 <b>기록 폴더</b>를 누르면 폴더가 열립니다.
             그 안의 <code>relay.log</code>를 더블클릭해 메모장으로 열고 <b>맨 아래 줄</b>을 보세요.
             <code>DRYRUN 성공</code>이 보이면 문자가 정상적으로 도착해 채팅방까지 찾은 것입니다.</p>
@@ -1603,6 +1601,99 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
         <h2 id="s9h">문제 해결</h2>
       </div>
 
+      <h3>문자로 받은 문구로 찾기</h3>
+      <p>릴레이가 보내는 답장은 모두 <code>[카톡]</code>으로 시작합니다. 받은 문자의 <b>첫 줄</b>을 아래에서 찾으세요.</p>
+      <div class="tw">
+        <table>
+          <thead>
+            <tr><th scope="col">받은 문자 첫 줄</th><th scope="col">뜻</th><th scope="col">할 일</th></tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row"><code>PC 응답 없음</code></th>
+              <td>중계 휴대폰까지는 갔지만 PC에 닿지 못했습니다</td>
+              <td>PC가 켜져 있고 절전이 아닌지, 두 기기가 같은 Wi-Fi 인지 확인하세요.
+                그래도 안 되면 매크로 URL의 IP 주소가 지금 PC 주소와 같은지 보세요
+                (<a href="#s4">04 중계 휴대폰 설정</a>)</td></tr>
+            <tr><th scope="row"><code>접속 거부</code></th>
+              <td>PC까지는 닿았지만 IP 가 허용 목록에 없습니다</td>
+              <td><b>설정 편집</b>에서 <code>allowIPs</code>에 중계 휴대폰이 속한 대역을
+                <code>"192.168.0.*"</code> 형태로 추가하세요</td></tr>
+            <tr><th scope="row"><code>전송 실패</code><br><code>카카오톡 준비 안 됨</code></th>
+              <td><b>채팅방 이름 문제가 아닙니다.</b> 카카오톡을 조작하지 못했습니다</td>
+              <td>카카오톡이 실행 중이고 로그인돼 있는지, 카카오톡 화면잠금이 꺼져 있는지,
+                Windows 화면이 잠기지 않았는지 확인하세요. 잠시 뒤 다시 보내면 되는 경우가 많습니다</td></tr>
+            <tr><th scope="row"><code>전송 실패</code><br><code>OOO → 채팅방 없음</code></th>
+              <td>그 이름의 채팅방을 찾지 못했습니다</td>
+              <td>카카오톡에 보이는 이름 그대로 적었는지 확인하세요. 특수문자는 생략할 수 없습니다
+                (<a href="#s7">07 문자 보내는 방법</a>)</td></tr>
+            <tr><th scope="row"><code>대상 변경 실패</code><br><code>OOO → 채팅방 없음</code></th>
+              <td>대상을 바꾸지 않았습니다. <b>직전 대상이 그대로 남아 있습니다</b></td>
+              <td>이름을 고쳐 다시 <code>@</code>로 보내세요.
+                지금 대상은 <b>카톡 릴레이</b> 창 상태 줄에서 볼 수 있습니다</td></tr>
+            <tr><th scope="row"><code>중복 무시</code></th>
+              <td>5분 안에 <b>똑같은 내용</b>을 다시 보냈습니다. 두 번째는 보내지 않았습니다</td>
+              <td>내용을 조금 바꿔 다시 보내세요. 일부러 같은 문장을 반복해야 한다면
+                <a href="#s11">11 설정 바꾸기</a>의 <code>dedupeSeconds</code>를 줄이세요</td></tr>
+            <tr><th scope="row"><code>보냄</code><br><code>엄마 → 엄마들 모임</code></th>
+              <td>보내긴 했는데 <b>이름이 정확하지 않아 비슷한 방으로</b> 갔습니다</td>
+              <td>표시된 방이 맞는지 확인하세요. 아니면 이름을 더 정확히 적거나 별칭을 등록하세요</td></tr>
+            <tr><th scope="row"><code>일시 중지</code></th>
+              <td>문자 전달이 멈춰 있습니다</td>
+              <td>바탕 화면의 <b>카톡 릴레이</b>를 열고 <b>문자 전달 다시 시작</b>을 누르세요</td></tr>
+            <tr><th scope="row"><code>새 창 열기 필요</code></th>
+              <td>카카오톡이 채팅방을 메인창 안에서 열어 이름을 대조할 수 없습니다</td>
+              <td>카카오톡 <b>설정 &gt; 채팅</b>에서 <b>채팅방을 새 창으로 열기</b>를 켜세요</td></tr>
+            <tr><th scope="row"><code>지정된 대상 없음</code></th>
+              <td>지정해 둔 대상이 없는데 <code>@</code>만 보냈습니다</td>
+              <td>정상입니다. 첫 낱말이 방 이름으로 쓰입니다</td></tr>
+            <tr><th scope="row"><code>채팅방 이름 없음</code><br><code>보낼 내용 없음</code><br><code>형식 오류</code></th>
+              <td>문자 형식이 맞지 않습니다</td>
+              <td><code>채팅방 내용</code>처럼 <b>첫 띄어쓰기</b>로 구분해 보내세요
+                (<a href="#s7">07 문자 보내는 방법</a>)</td></tr>
+            <tr><th scope="row"><code>비밀번호 틀림</code></th>
+              <td>비밀번호를 켜 두었는데 맨 앞 낱말이 다릅니다</td>
+              <td><code>비밀번호 채팅방 내용</code> 순서로 보내세요</td></tr>
+            <tr><th scope="row"><code>주소 오류</code></th>
+              <td>매크로 URL 이 <code>/sms</code>가 아닙니다</td>
+              <td><a href="#s4">04 중계 휴대폰 설정</a>의 URL 과 대조하세요</td></tr>
+            <tr><th scope="row"><code>처리 중 오류</code></th>
+              <td>릴레이 안에서 예상 못 한 오류가 났습니다</td>
+              <td>조작 창의 <b>기록 폴더</b>에서 <code>relay.log</code> 마지막 줄을 확인하세요</td></tr>
+            <tr><th scope="row">아무 문자도 오지 않음</th>
+              <td>잘 전달됐거나, 문자가 릴레이까지 오지 못한 것입니다</td>
+              <td>아래 <b>아무 반응도 없을 때</b>를 보세요</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>아무 반응도 없을 때</h3>
+      <p>문자를 보냈는데 카카오톡에도 안 가고 답장도 오지 않는다면 <b>위에서부터</b> 확인하세요.
+        매크로를 가져와 설치했다면 앞의 세 가지가 가장 흔합니다.</p>
+      <ol class="steps" role="list">
+        <li><b>매크로의 발신 번호를 고쳤는가</b>
+          <p>MacroDroid에서 매크로를 열고 <b>SMS 수신</b> 트리거를 누르세요.
+            번호가 <code>01012345678</code> 그대로면 <b>아무 문자도 전달되지 않습니다.</b>
+            이 경우 PC 기록에는 한 줄도 남지 않습니다.</p>
+        </li>
+        <li><b>매크로 스위치가 켜져 있는가</b>
+          <p>MacroDroid 매크로 목록에서 스위치가 <b>켜짐</b>인지 확인하세요.</p>
+        </li>
+        <li><b>MacroDroid에 SMS 권한이 있는가</b>
+          <p><b>설정 &gt; 애플리케이션 &gt; MacroDroid &gt; 권한</b>에서 SMS 를 허용하세요.
+            권한이 없으면 <b>아무 표시 없이</b> 건너뜁니다.</p>
+        </li>
+        <li><b>PC 설정에 발신 번호를 등록했는가</b>
+          <p>조작 창 <b>설정 편집</b>에서 <code>allowFrom</code>을 확인하세요.
+            여기 없는 번호에서 온 문자는 <b>조용히 버려지고 답장도 가지 않습니다.</b></p>
+          <p>구분하는 방법: <b>기록 폴더</b>의 <code>relay.log</code> 마지막 줄에
+            <code>거부: 허용되지 않은 발신번호</code>가 있으면 이 경우입니다.
+            아무 줄도 없으면 문자가 PC까지 오지 못한 것입니다.</p>
+        </li>
+        <li><b>PC까지 닿는지 확인</b>
+          <p>중계 휴대폰 브라우저에서 <code>http://<span data-ip>내 IP 주소</span>:8787/health</code>를 열어 보세요.</p>
+        </li>
+      </ol>
+
       <p>먼저 조작 창에서 <b>상태 점검</b>을 누르세요. 문제가 있는 항목만 찾아 알려 줍니다.</p>
       <p>카카오톡 실행과 메인창 인식, 비밀번호, 허용 발신자, 시험 모드, 채팅방 별칭,
         LAN IP, 방화벽 규칙, 네트워크 프로필, 릴레이 실행 상태, 문자 전달 상태,
@@ -1643,7 +1734,7 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
                 자세한 내용은 <a href="#s5">05 발신자 등록</a>을 참고하세요.</td>
             </tr>
             <tr>
-              <th scope="row">로그에는 성공인데 카카오톡에 오지 않음</th>
+              <th scope="row">기록에는 성공인데 카카오톡에 오지 않음</th>
               <td><code>dryRun</code> 값이 <code>true</code>인지 확인하세요.
                 <code>true</code>이면 실제로 전송하지 않고 <code>DRYRUN 성공</code>만 기록됩니다.</td>
             </tr>
@@ -1679,7 +1770,7 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
                 이 트리거는 MMS를 감지하지 못하므로 장문이 전달되지 않습니다.
                 장문은 짧게 나누어 보내세요.
                 알림 트리거로 바꾸면 장문도 받을 수 있지만 지난 문자가 다시 전달되는 문제가 생기므로 권하지 않습니다.
-                <a href="#s15">15 부록 · 매크로를 직접 만들기</a>을 참고하세요.</td>
+                <a href="#s15">15 부록 · 매크로를 직접 만들기</a>를 참고하세요.</td>
             </tr>
             <tr>
               <th scope="row">같은 문자가 두 번 전송됨</th>
@@ -1710,14 +1801,14 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
         <p>이 목록에는 <b>지금 새 창으로 열려 있는</b> 채팅방만 나옵니다.
           릴레이는 전송이 끝나면 창을 닫으므로 평소에는 비어 있습니다.
           이름을 확인하려면 카카오톡에서 그 방을 새 창으로 열어 둔 뒤 눌러 보세요.</p>
-        <p>릴레이 PC 의 브라우저에서 아래 주소로도 볼 수 있습니다.
+        <p>릴레이 PC의 브라우저에서 아래 주소로도 볼 수 있습니다.
           채팅방 이름은 곧 사람 이름이므로 다른 기기에서는 열리지 않습니다.</p>
         <div class="codewrap">
 <pre>http://<span data-ip>내 IP 주소</span>:8787/rooms</pre>
         </div>
 
 
-      <h3>로그</h3>
+      <h3>기록</h3>
       <div class="tw">
         <table>
           <thead>
@@ -1752,13 +1843,13 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
             </tr>
             <tr>
               <th scope="row">사진 · 동영상 · 파일</th>
-              <td>전달되지 않습니다. 사진을 붙이면 문자가 MMS 로 바뀌는데,
-                <code>SMS 수신</code> 트리거는 MMS 를 감지하지 못해 <b>릴레이에 도착조차 하지 않습니다.</b>
+              <td>전달되지 않습니다. 사진을 붙이면 문자가 MMS로 바뀌는데,
+                <code>SMS 수신</code> 트리거는 MMS를 감지하지 못해 <b>릴레이에 도착조차 하지 않습니다.</b>
                 아무 답장도 오지 않으므로, 응답이 없으면 사진을 보낸 것은 아닌지 확인하세요.</td>
             </tr>
             <tr>
               <th scope="row">본문에 이모지</th>
-              <td>권하지 않습니다. 이모지를 넣으면 문자가 MMS 로 바뀌어 위와 같은 이유로 도착하지 않습니다.
+              <td>권하지 않습니다. 이모지를 넣으면 문자가 MMS로 바뀌어 위와 같은 이유로 도착하지 않습니다.
                 채팅방 이름에 이모지가 있다면 이름 앞부분만 적거나
                 <a href="#s5">05</a>에서 별칭을 등록해 이모지 없이 보내세요.</td>
             </tr>
@@ -1935,7 +2026,7 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
       </div>
 
       <div class="cal cal--must">
-        <b class="cal-h">PC 에 남는 것</b>
+        <b class="cal-h">PC에 남는 것</b>
         <div class="tw">
           <table>
             <thead>
@@ -1943,7 +2034,7 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
             </thead>
             <tbody>
               <tr><th scope="row"><code>program\relay.log</code></th>
-                  <td>주고받은 문자 내용(앞 40자)과 발신 번호. 1MB 를 넘으면 <code>relay.log.old</code>로 한 번 밀리고, 그보다 오래된 것은 남지 않습니다</td></tr>
+                  <td>주고받은 문자 내용(앞 40자)과 발신 번호. 1MB를 넘으면 <code>relay.log.old</code>로 한 번 밀리고, 그보다 오래된 것은 남지 않습니다</td></tr>
               <tr><th scope="row"><code>program\config.json</code></th>
                   <td>전화번호, 비밀번호를 켰다면 그 값</td></tr>
               <tr><th scope="row"><code>program\pinned.json</code></th>
@@ -2024,7 +2115,7 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
           <p>이미 설치를 마친 상태에서는 조작 창에 <b>[설치하기]</b> 버튼이 나오지 않습니다.
             <code>program</code> 폴더의 <code>Setup.ps1</code>을
             <b>마우스 오른쪽 버튼 클릭 &gt; PowerShell로 실행</b>하세요.
-            권한 창이 나오면 <b>[예]</b>를 선택합니다.</p>
+            권한 창이 나오면 <b>[예]</b>를 선택하세요.</p>
           <p>기존 설정은 덮어쓰지 않고 전화번호도 다시 묻지 않습니다.</p>
         </li>
         <li><b>어느 판이 돌고 있는지 확인</b>
@@ -2038,7 +2129,7 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
         </li>
         <li><b>중계 휴대폰 설정 손보기</b>
           <p>URL 끝에 <code>&amp;reply=text</code>가 있는지, 제한 시간이 <code>120</code>초인지 확인하세요.
-            <a href="#s15">15 부록 · 매크로를 직접 만들기</a>을 참고해 <b>SMS 수신</b> 방식으로 바꾸는 것도 권합니다.</p>
+            <a href="#s15">15 부록 · 매크로를 직접 만들기</a>를 참고해 <b>SMS 수신</b> 방식으로 바꾸는 것도 권합니다.</p>
         </li>
       </ol>
 
@@ -2067,7 +2158,7 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
         <li><b>지우기 프로그램 실행</b>
           <p><code>program</code> 폴더의 <code>Uninstall.ps1</code>을
             <b>마우스 오른쪽 버튼 클릭 &gt; PowerShell로 실행</b>하세요.
-            권한 창이 나오면 <b>[예]</b>를 선택합니다.</p>
+            권한 창이 나오면 <b>[예]</b>를 선택하세요.</p>
           <p>프로그램을 내리고, 예약 작업 2개와 방화벽 규칙, 바탕 화면 바로가기를 지웁니다.
             기록과 설정을 지울지는 물어봅니다.</p>
         </li>
@@ -2109,7 +2200,7 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
             </thead>
             <tbody>
               <tr><th scope="row">단문</th><td>받습니다</td><td>받습니다</td></tr>
-              <tr><th scope="row">장문 (MMS)</th><td><b>받지 못합니다</b></td><td>받습니다</td></tr>
+              <tr><th scope="row">장문(MMS)</th><td><b>받지 못합니다</b></td><td>받습니다</td></tr>
               <tr><th scope="row">발신자 구분</th><td>전화번호</td><td>연락처에 저장된 이름</td></tr>
               <tr><th scope="row">지난 문자 재전송</th><td>일어나지 않습니다</td><td><b>일어날 수 있습니다</b></td></tr>
               <tr><th scope="row">결과를 문자로 받기</th><td>됩니다</td><td><b>안 됩니다</b></td></tr>
@@ -2139,7 +2230,7 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
 
         
       <h3>매크로 만들기</h3>
-      <p>MacroDroid 는 <b>이런 일이 생기면(트리거) → 이렇게 해라(액션)</b>를 한 묶음으로 저장해 두는 앱입니다.
+      <p>MacroDroid는 <b>이런 일이 생기면(트리거) → 이렇게 해라(액션)</b>를 한 묶음으로 저장해 두는 앱입니다.
         그 묶음 하나를 <b>매크로</b>라고 부릅니다.
         앱을 열고 오른쪽 아래 <b>+</b>를 누르면 <b>트리거</b>, <b>액션</b>, <b>제약</b> 세 칸이 있는 편집 화면이 나옵니다.</p>
 <h4>SMS 수신 <span class="tag tag--rec">권장</span></h4>
@@ -2197,6 +2288,8 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
             <tr><th scope="row">채팅방을 찾지 못함 · 전달 실패</th><td>실패한 이유</td><td>문자로 알림</td></tr>
             <tr><th scope="row">일시 중지 상태</th><td>일시 중지 안내</td><td>문자로 알림</td></tr>
             <tr><th scope="row">PC 꺼짐 · Wi-Fi 끊김</th><td><b>응답 없음</b> (표식도 없음)</td><td>문자로 알림</td></tr>
+            <tr><th scope="row">5분 안에 같은 문자를 또 보냄</th><td>중복 무시 안내</td><td>문자로 알림</td></tr>
+            <tr><th scope="row">이름 앞부분만 맞아 비슷한 방으로 감</th><td>어느 방으로 갔는지</td><td>문자로 알림</td></tr>
             <tr><th scope="row">등록하지 않은 번호</th><td><code>[카톡] OK</code></td><td>문자 없음</td></tr>
           </tbody>
         </table>
@@ -2232,7 +2325,8 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
         그대로 두면 그 문장이 문자로 나가므로, <code>[카톡]</code>이 붙어 있는지로 구분합니다.</p>
 
 
-      <p>위에서 만든 <b>SMS 수신</b> 매크로에 액션을 더합니다. 순서가 중요합니다.</p>
+      <p><b>SMS 수신</b> 매크로에 액션을 더합니다. 순서가 중요합니다.
+        <a href="#s4">04 중계 휴대폰 설정</a>에서 매크로 파일을 가져왔다면 이 액션들이 이미 들어 있습니다.</p>
       
       <ol class="steps" role="list">
         <li><b>맨 앞에서 변수를 비워 둡니다</b>
@@ -2257,11 +2351,9 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
             <code>[카톡]</code>을 <b>포함하지 않음</b></p>
           <p>그 안에 <b>변수 설정</b> 액션을 넣고, <code>답장</code>에 아래 문장을 넣습니다.</p>
           <div class="codewrap">
-<pre>[카톡] PC 응답 없음
-전원 · Wi-Fi 확인</pre>
+<pre>[카톡] PC 응답 없음 · 전원/Wi-Fi 확인</pre>
           </div>
-          <p>입력란에서 줄바꿈이 되지 않으면 <code>[카톡] PC 응답 없음 · 전원/Wi-Fi 확인</code>처럼 한 줄로 적어도 됩니다.
-            릴레이가 보내는 <code>[카톡] 전송 실패</code>는 <b>PC는 살아 있는데 카카오톡 조작이 실패한 경우</b>이므로,
+          <p>릴레이가 보내는 <code>[카톡] 전송 실패</code>는 <b>PC는 살아 있는데 카카오톡 조작이 실패한 경우</b>이므로,
             첫 줄을 다르게 두어 어느 쪽인지 한눈에 알 수 있게 합니다.</p>
           <p><b>조건문 종료</b>로 닫습니다.</p>
         </li>

@@ -88,6 +88,15 @@ Chk '시험 모드' (-not $cfg.dryRun) $(if($cfg.dryRun){'켜짐 - 카카오톡�
   릴레이는 숨어서 도는데 다른 창이 앞에 있으면 Enter 가 그 창으로 가 버려,
   글자는 입력창에 들어갔는데 전송만 안 되는 상태가 된다. 원인을 찾기 매우 어렵다.
 #>
+<#
+  릴레이가 접속을 거부할 때 '[상태 점검]으로 허용 대역 보기' 라고 안내한다.
+  그런데 여기서 허용 대역을 보여 주지 않으면 그 안내가 막다른 길이 된다.
+#>
+$ips = @($cfg.allowIPs)
+Chk '허용 접속 대역' ($ips.Count -gt 0) `
+    $(if($ips.Count){$ips -join ', '}else{'비어 있음 - 모든 기기 허용'}) `
+    '[카톡 릴레이] > [설정 편집]에서 allowIPs 에 중계 휴대폰이 속한 대역을 넣으세요'
+
 $sm = if ($cfg.PSObject.Properties.Name -contains 'sendMethod') { [string]$cfg.sendMethod } else { 'auto' }
 Chk '전송 방법' ($sm -ne 'enter') $sm `
     '[카톡 릴레이] > [설정 편집]에서 sendMethod 를 auto 로 바꾸세요. enter 는 다른 창이 앞에 있으면 실패합니다'

@@ -1,7 +1,7 @@
 ﻿<#
   Uninstall.ps1 - 카톡 릴레이를 컴퓨터에서 지운다.
 
-  설치할 때 만든 것은 넷이다. 이 셋은 폴더를 지워도 남으므로 여기서 치운다.
+  설치할 때 만든 것은 넷이다. 이 넷은 폴더를 지워도 남으므로 여기서 치운다.
     예약 작업 2개 (로그온 자동 실행, 자동 복구)
     방화벽 규칙 1개
     바탕 화면 바로가기
@@ -9,7 +9,7 @@
   기록과 설정에는 주고받은 문자 내용과 전화번호가 들어 있다.
   지울지 말지는 물어보고 정한다.
 
-  방화벽 규칙을 지우려면 관리자 권한이 필요하므로 스스로 승격한다.
+  방화벽 규칙을 지우려면 관리자 권한이 필요하므로 스스로 권한을 올린다.
 #>
 param([switch]$Elevated)
 
@@ -27,7 +27,7 @@ if (-not $Elevated) {
     $me = [Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()
     if (-not $me.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
         Say '  관리자 권한 창이 뜨면 [예]를 눌러 주세요.' 'Yellow'
-        Say '  방화벽 규칙을 지우는 데에 필요합니다.' 'DarkGray'
+        Say '  방화벽 규칙을 지우는 데 필요합니다.' 'DarkGray'
         try {
             Start-Process -FilePath 'powershell.exe' -Verb RunAs -ArgumentList `
                 '-NoProfile','-ExecutionPolicy','Bypass','-File',$PSCommandPath,'-Elevated'
@@ -75,11 +75,11 @@ if ($rule) {
         Remove-NetFirewallRule -DisplayName $ruleName -ErrorAction Stop
         Say "     $ruleName 지움" 'DarkGray'
     } catch {
-        Say '     권한이 없어 지우지 못했습니다. 관리자 PowerShell 에서 아래를 실행하세요.' 'Yellow'
+        Say '     권한이 없어 지우지 못했습니다. 관리자 PowerShell에서 아래를 실행하세요.' 'Yellow'
         Say "     Remove-NetFirewallRule -DisplayName `"$ruleName`"" 'White'
     }
 } else {
-    Say '     남아 있는 규칙이 없습니다' 'DarkGray'
+    Say '     남아 있는 규칙이 없습니다.' 'DarkGray'
 }
 
 # 4) 바로가기
@@ -91,7 +91,7 @@ else { Say '     없음' 'DarkGray' }
 # 5) 기록과 설정
 Say ''
 Say '  기록에는 주고받은 문자 내용이, 설정에는 전화번호가 들어 있습니다.' 'Yellow'
-$ans = Read-Host '  지금 지울까요? (y = 지움 / 그 밖 = 남겨 둠)'
+$ans = Read-Host '  지금 지울까요? (y = 지움, 그 밖의 키 = 남겨 둠)'
 if ($ans -eq 'y') {
     foreach ($f in @('relay.log','relay.log.old','watchdog.log','watchdog.log.old',
                      'config.json','pinned.json','fail-shot.png',
