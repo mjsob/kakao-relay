@@ -26,6 +26,7 @@ public class WinCon {
 }
 if (-not $ConfigPath) { $ConfigPath = Join-Path $PSScriptRoot 'config.json' }
 . "$PSScriptRoot\KakaoCore.ps1"
+. "$PSScriptRoot\Version.ps1"
 
 # ---------- 설정 ----------
 if (-not (Test-Path $ConfigPath)) { throw "설정 파일 없음: $ConfigPath" }
@@ -1010,7 +1011,7 @@ Write-Host "  자동 열기 : $(if ($cfg.autoOpen) {'켜짐'} else {'꺼짐 (채
 Write-Host "  중지      : Ctrl+C" -ForegroundColor DarkGray
 Write-Host ""
 }
-Write-Log "서버 시작 (port=$($cfg.port), dryRun=$($cfg.dryRun))"
+Write-Log "카톡 릴레이 v$RelayVersion 시작 (포트 $($cfg.port), 시험 모드 $(if($cfg.dryRun){'켜짐'}else{'꺼짐'}))"
 
 $script:running   = $true
 $script:startedAt = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
@@ -1306,6 +1307,7 @@ try {
                                 "$($_.Key -replace '^name:','') → $($_.Value)"
                             }) -join ', '
                         })
+                    version    = $RelayVersion
                     pid        = $PID
                     windowMode = $winMode
                     trayIcon   = [bool]($notify -ne $null -and $notify.Visible)

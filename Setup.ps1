@@ -13,6 +13,7 @@ param(
     [switch]$SkipTasks
 )
 [Console]::OutputEncoding = [Text.Encoding]::UTF8
+. "$PSScriptRoot\Version.ps1"
 $ErrorActionPreference = 'Stop'
 
 function Say([string]$m, [string]$c = 'Gray') { Write-Host $m -ForegroundColor $c }
@@ -185,7 +186,7 @@ try {
   그래서 (1) 파일로 남기고 (2) 메모장으로 띄우고 (3) 조작 창을 다시 열어 준다.
 #>
 $guide = @"
-카톡 릴레이 - 설치 결과
+카톡 릴레이 v$RelayVersion - 설치가 끝났습니다
 =======================================
 
 폰(MacroDroid)에 넣을 값

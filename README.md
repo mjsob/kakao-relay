@@ -25,6 +25,8 @@
 
 **[kakao-relay-setup.zip 내려받기](https://github.com/mjsob/kakao-relay/releases/latest/download/kakao-relay-setup.zip)**
 
+지금 쓰는 판은 **카톡 릴레이** 창의 작업 표시줄 이름과 **상태 점검** 첫 줄에서 확인할 수 있습니다.
+
 압축을 풀고 `KakaoRelay.bat`을 실행한 뒤 **설치하기**를 누르세요.
 
 PC와 휴대폰 양쪽 설정은

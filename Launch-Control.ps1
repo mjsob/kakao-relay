@@ -14,6 +14,7 @@ param([switch]$ConfirmQuit)
 
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
+. "$PSScriptRoot\Version.ps1"
 [System.Windows.Forms.Application]::EnableVisualStyles()
 <#
   글자를 GDI 로 그리게 한다.
@@ -176,7 +177,9 @@ function Get-State {
 
 # ---------- 창 ----------
 $form = New-Object System.Windows.Forms.Form
-$form.Text = '카톡 릴레이'
+# 창 안에는 그대로 '카톡 릴레이' 만 보이고, 작업 표시줄과 Alt+Tab 에만 판이 붙는다.
+# 화면을 어지럽히지 않으면서, 문제를 물어볼 때 어느 판인지 확인할 수 있다.
+$form.Text = "카톡 릴레이 v$RelayVersion"
 $form.FormBorderStyle = 'None'
 $form.StartPosition = 'CenterScreen'
 <#

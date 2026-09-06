@@ -3,6 +3,7 @@
   통과하지 못한 항목만 고치면 된다.
 #>
 [Console]::OutputEncoding = [Text.Encoding]::UTF8
+. "$PSScriptRoot\Version.ps1"
 try {
     $host.UI.RawUI.BackgroundColor = 'Black'
     $host.UI.RawUI.WindowSize = New-Object System.Management.Automation.Host.Size(96, 32)
@@ -10,7 +11,7 @@ try {
 } catch { }
 
 Write-Host ''
-Write-Host '  카톡 릴레이 - 상태 점검' -ForegroundColor White
+Write-Host "  카톡 릴레이 v$RelayVersion - 상태 점검" -ForegroundColor White
 Write-Host '  ────────────────────────────────────────────────' -ForegroundColor DarkGray
 Write-Host ''
 
