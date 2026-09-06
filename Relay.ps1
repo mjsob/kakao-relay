@@ -332,7 +332,7 @@ function Save-Pins {
         $tmp = "$PinFile.tmp"
         $o | ConvertTo-Json -Depth 3 | Set-Content $tmp -Encoding UTF8
         Move-Item $tmp $PinFile -Force
-    } catch { Write-Log "고정 대상 저장 실패(무시): $($_.Exception.Message)" 'WARN' }
+    } catch { Write-Log "대상 저장 실패(무시): $($_.Exception.Message)" 'WARN' }
 }
 
 function Get-Pin  { param([string]$from) $k = Get-SenderKey $from; if ($script:pins.ContainsKey($k)) { $script:pins[$k] } else { $null } }
@@ -360,7 +360,7 @@ function Parse-Command {
         $i = $body.IndexOf(' ')
         if ($i -lt 1) { return @{ ok=$false; error="형식 오류`n$fmt`n띄어쓰기로 구분" } }
         # -ne 는 대소문자를 무시한다. 비밀번호는 구분해야 하므로 -cne 를 쓴다.
-        if ($body.Substring(0, $i).Trim() -cne $cfg.password) { return @{ ok=$false; error='비밀번호 틀림' + [char]10 + '맨 앞 낱말이 비밀번호' } }
+        if ($body.Substring(0, $i).Trim() -cne $cfg.password) { return @{ ok=$false; error='비밀번호 틀림' + [char]10 + '맨 앞 단어이 비밀번호' } }
         $body = $body.Substring($i + 1).Trim()
         if (-not $body) { return @{ ok=$false; error="보낼 내용 없음`n비밀번호만 왔음" } }
     }
@@ -393,7 +393,7 @@ function Parse-Command {
 
     <#
       대상이 고정돼 있거나 defaultRoom 이 정해져 있으면 방 이름을 적지 않는다.
-      본문 전체가 내용이다. 첫 낱말을 방 이름으로 떼어내면 문장의 첫 단어가 사라진다.
+      본문 전체가 내용이다. 첫 단어을 방 이름으로 떼어내면 문장의 첫 단어가 사라진다.
     #>
     $pinned = Get-Pin $script:parseFrom
     if ($pinned) {
@@ -758,9 +758,9 @@ function Handle-Sms {
 
     if ($cmd.pinAction -eq 'clear') {
         Clear-Pin $from
-        Write-Log "대상 고정 해제 (이전 [$before])" 'INFO'
-        $say = if ($before) { '대상 해제' + $nl + (Format-RoomForSms $before) + " $arrow 해제" + $nl + '이제 첫 낱말이 방 이름' }
-               else         { '지정된 대상 없음' + $nl + '첫 낱말이 방 이름' }
+        Write-Log "대상 해제 (이전 [$before])" 'INFO'
+        $say = if ($before) { '대상 해제' + $nl + (Format-RoomForSms $before) + " $arrow 해제" + $nl + '이제 첫 단어이 채팅방' }
+               else         { '지정된 대상 없음' + $nl + '첫 단어이 채팅방 이름' }
         return @{ ok = $true; error = $null; pinned = $null; retryable = $false; reply = $say }
     }
     if ($cmd.pinAction -eq 'set') {
@@ -786,7 +786,7 @@ function Handle-Sms {
             $ret = if ($onlyPin) { $chk.retryable } else { [bool]$sendRes.retryable }
             # 방이 없어서 실패한 것인지, 카카오톡이 아직 준비되지 않아 실패한 것인지 가려서 알린다
             $missing = if ($onlyPin) { [bool]$chk.missing } else { -not [bool]$sendRes.retryable }
-            Write-Log "대상 고정 안 함 - [$($cmd.room)] 확인 실패: $why" 'WARN'
+            Write-Log "대상 지정 안 함 - [$($cmd.room)] 확인 실패: $why" 'WARN'
             $say = if ($missing) {
                        $keep = if ($before) { '대상 그대로 ' + (Format-RoomForSms $before) } else { '지정된 대상 없음' }
                        '대상 변경 실패' + $nl + (Format-RoomForSms $cmd.room) + " $arrow 채팅방 없음" + $nl + $keep
@@ -1452,7 +1452,7 @@ try {
                 }
             }
             else {
-                $msg = "주소 오류`n/sms 로 보내야 합니다"
+                $msg = "주소 오류`n/sms로 보내야 합니다"
                 Send-HttpResponse -stream $req.Stream -Status $(if ($plain) { 200 } else { 404 }) -PlainText:$plain `
                     -Payload @{ ok=$false; error=$msg; reply=$msg }
             }
@@ -1489,5 +1489,5 @@ try {
 } finally {
     $listener.Stop()
     if ($notify) { $notify.Visible = $false; $notify.Dispose() }
-    Write-Log "서버 종료"
+    Write-Log "릴레이 종료"
 }

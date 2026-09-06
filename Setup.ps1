@@ -36,7 +36,7 @@ $kkExe = @(
 ) | Where-Object { Test-Path $_ } | Select-Object -First 1
 
 if ($kkExe) { Say "  카카오톡: $kkExe" 'Green' }
-else { Say '  카카오톡을 찾을 수 없습니다. 설치 후 다시 실행하세요.' 'Red'; return }
+else { Say '  카카오톡을 찾지 못했습니다. 설치한 뒤 다시 실행하세요.' 'Red'; return }
 
 $kkRunning = @(Get-Process -Name KakaoTalk -ErrorAction SilentlyContinue).Count -gt 0
 Say ("  카카오톡 실행: {0}" -f $(if ($kkRunning) { '실행 중' } else { '꺼져 있음 (실행하고 로그인해 두세요)' })) `
@@ -59,7 +59,7 @@ Say "  허용할 대역     : $subnet" 'Green'
 $profileName = (Get-NetConnectionProfile -InterfaceAlias $ipInfo.InterfaceAlias -ErrorAction SilentlyContinue).NetworkCategory
 Say ("  네트워크 프로필 : {0}" -f $profileName) $(if ($profileName -eq 'Private') { 'Green' } else { 'Yellow' })
 if ($profileName -ne 'Private') {
-    Say '     집 네트워크라면 관리자 PowerShell 에서 아래를 실행하는 것을 권장합니다:' 'DarkGray'
+    Say '     집 네트워크라면 관리자 PowerShell 에서 아래를 실행하세요.' 'DarkGray'
     Say ("     Set-NetConnectionProfile -InterfaceAlias `"{0}`" -NetworkCategory Private" -f $ipInfo.InterfaceAlias) 'DarkGray'
 }
 
@@ -83,7 +83,7 @@ if (Test-Path $cfgPath) {
           '문자를 보낼 폰' 이라고 물으면 받는 쪽(중계 공기계) 번호로 읽혀,
           반대 번호를 넣으면 모든 문자가 조용히 거부된다.
         #>
-        $Phone = Read-Host '  카톡을 대신 보내라고 문자를 칠 폰 번호 (예: 01012345678)'
+        $Phone = Read-Host '  발신 휴대폰 번호를 입력하세요. 문자를 보내는 쪽입니다 (예: 01012345678)'
     }
     if ($Phone) { $cfg.allowFrom = @($Phone) }
     $cfg.allowIPs = @('127.0.0.1', $subnet)
@@ -189,7 +189,7 @@ $guide = @"
 카톡 릴레이 v$RelayVersion - 설치가 끝났습니다
 =======================================
 
-폰(MacroDroid)에 넣을 값
+중계 휴대폰(MacroDroid)에 넣을 값
 ---------------------------------------
   트리거       : SMS 수신
   URL          : http://$ip`:$($cfg.port)/sms?from=[SMS 번호]&reply=text
@@ -219,7 +219,7 @@ $guide = @"
 
 확인할 것
 ---------------------------------------
-  Wi-Fi가 [공용 네트워크]로 되어 있으면 폰에서 접속되지 않습니다.
+  Wi-Fi가 [공용 네트워크]로 되어 있으면 중계 휴대폰에서 접속하지 못합니다.
   설정 > 네트워크 및 인터넷 > 속성 > 네트워크 프로필 유형에서 [개인]을 선택하세요.
   PC 주소가 바뀌지 않도록 공유기에서 이 PC에 고정 IP를 할당해 두면 좋습니다.
 
@@ -227,7 +227,7 @@ $guide = @"
 ---------------------------------------
   1) 카카오톡을 실행하고 로그인한 뒤 화면잠금을 끕니다
   2) [카톡 릴레이] > [설정 편집]에서 자주 쓸 채팅방을 aliases에 등록합니다
-  3) 위 URL을 폰 MacroDroid에 입력합니다
+  3) 위 URL을 중계 휴대폰의 MacroDroid 에 입력합니다
   4) 시험 삼아 문자를 한 통 보냅니다
      처음에는 시험 모드라 카카오톡으로 실제 전송되지 않습니다.
      [카톡 릴레이] 창에서 어느 채팅방으로 갈 뻔했는지 확인한 뒤 시험 모드를 해제하세요.

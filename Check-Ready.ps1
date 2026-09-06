@@ -60,7 +60,7 @@ function Chk([string]$name, [bool]$ok, [string]$detail, [string]$fix = '') {
 $kk = @(Get-KakaoProcessIds)
 Chk '카카오톡 실행' ($kk.Count -gt 0) $(if($kk.Count){'실행 중'}else{'실행 안 됨'}) '카카오톡을 실행하고 로그인하세요'
 $main = Get-KakaoMainWindow
-Chk '카카오톡 메인창 인식' ($null -ne $main) $(if($main){'창 확인됨'}else{'못 찾음'}) '카카오톡 로그인 및 화면잠금 해제'
+Chk '카카오톡 메인창 인식' ($null -ne $main) $(if($main){'창 확인됨'}else{'못 찾음'}) '카카오톡에 로그인하고 화면잠금을 끄세요'
 
 # --- 설정 ---
 # 비밀번호는 requirePassword 가 켜져 있을 때만 의미가 있다.
@@ -69,7 +69,7 @@ $needPw = if ($cfg.PSObject.Properties.Name -contains 'requirePassword') { [bool
 if ($needPw) {
     Chk '비밀번호' ($cfg.password -ne 'CHANGE_ME' -and $cfg.password.Length -ge 4) `
         $(if($cfg.password -eq 'CHANGE_ME'){'기본값 그대로'}else{"설정됨 ($($cfg.password.Length)자)"}) `
-        '[카톡 릴레이] > [설정 편집]에서 password 변경'
+        '[카톡 릴레이] > [설정 편집]에서 password 를 바꾸세요'
 } else {
     Chk '비밀번호' $true '사용 안 함 (문자 형식: 채팅방 내용)' ''
 }
@@ -77,10 +77,10 @@ if ($needPw) {
 $allow = @($cfg.allowFrom | Where-Object { $_ -and $_ -ne '010-0000-0000' })
 Chk '허용 발신번호' ($allow.Count -gt 0) `
     $(if($allow.Count){$allow -join ', '}else{'예시 번호 그대로'}) `
-    '[카톡 릴레이] > [설정 편집]에서 allowFrom에 문자를 보낼 번호를 넣으세요'
+    '[카톡 릴레이] > [설정 편집]에서 allowFrom 에 발신 휴대폰 번호를 넣으세요'
 
 # 조작 창에 [시험 모드 해제] 버튼이 있다. 메모장으로 JSON 을 고치게 하면 안 된다.
-Chk '시험 모드' (-not $cfg.dryRun) $(if($cfg.dryRun){'켜짐 - 카카오톡으로 실제 전송하지 않음'}else{'꺼짐'}) `
+Chk '시험 모드' (-not $cfg.dryRun) $(if($cfg.dryRun){'켜짐 - 카카오톡으로 실제 전송하지 않습니다'}else{'꺼짐'}) `
     '[카톡 릴레이] 창에서 [시험 모드 해제]를 누르세요'
 
 <#
@@ -94,16 +94,16 @@ Chk '시험 모드' (-not $cfg.dryRun) $(if($cfg.dryRun){'켜짐 - 카카오톡�
 #>
 $ips = @($cfg.allowIPs)
 Chk '허용 접속 대역' ($ips.Count -gt 0) `
-    $(if($ips.Count){$ips -join ', '}else{'비어 있음 - 모든 기기 허용'}) `
+    $(if($ips.Count){$ips -join ', '}else{'비어 있음 - 모든 기기를 허용합니다'}) `
     '[카톡 릴레이] > [설정 편집]에서 allowIPs 에 중계 휴대폰이 속한 대역을 넣으세요'
 
 $sm = if ($cfg.PSObject.Properties.Name -contains 'sendMethod') { [string]$cfg.sendMethod } else { 'auto' }
 Chk '전송 방법' ($sm -ne 'enter') $sm `
-    '[카톡 릴레이] > [설정 편집]에서 sendMethod 를 auto 로 바꾸세요. enter 는 다른 창이 앞에 있으면 실패합니다'
+    '[카톡 릴레이] > [설정 편집]에서 sendMethod 를 auto 로 바꾸세요'
 
 $aliasCount = @($cfg.aliases.PSObject.Properties).Count
 # 별칭이 없어도 전체 채팅방 이름으로 보내면 되므로 실패로 취급하지 않는다
-Chk '채팅방 별칭' $true $(if($aliasCount -gt 0){"$aliasCount 개 등록"}else{'없음 (전체 방 이름으로 보내면 됨)'}) ''
+Chk '채팅방 별칭' $true $(if($aliasCount -gt 0){"${aliasCount}개 등록"}else{'없음 (채팅방 이름을 그대로 써도 됩니다)'}) ''
 
 # --- 별칭이 가리키는 방이 실제로 열리는지 ---
 foreach ($a in $cfg.aliases.PSObject.Properties) {
@@ -116,10 +116,10 @@ $ip = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object {
         $_.InterfaceAlias -notlike '*WSL*' -and $_.InterfaceAlias -notlike '*Default Switch*' -and
         $_.IPAddress -notlike '127.*' -and $_.IPAddress -notlike '169.254.*' } |
         Select-Object -First 1 -ExpandProperty IPAddress)
-Chk 'LAN IP' ($null -ne $ip) $(if($ip){"$ip -> http://$ip`:$($cfg.port)/sms"}else{'못 찾음'}) '공유기에서 DHCP 고정 할당 권장'
+Chk 'LAN IP' ($null -ne $ip) $(if($ip){"$ip -> http://$ip`:$($cfg.port)/sms"}else{'못 찾음'}) '공유기에서 이 PC 에 고정 IP 를 할당하세요'
 
 $fw = Get-NetFirewallRule -DisplayName "KakaoRelay ($($cfg.port))" -ErrorAction SilentlyContinue
-Chk '방화벽 인바운드' ($null -ne $fw) $(if($fw){'허용됨'}else{'규칙 없음'}) 'program 폴더의 Setup.ps1을 마우스 오른쪽 > PowerShell로 실행 (관리자 권한 필요)'
+Chk '방화벽 인바운드' ($null -ne $fw) $(if($fw){'허용됨'}else{'규칙 없음'}) 'program 폴더의 Setup.ps1을 마우스 오른쪽 버튼 클릭 > PowerShell로 실행하세요 (관리자 권한이 필요합니다)'
 
 <#
   방화벽 규칙은 '개인' 프로필에만 만든다. 그래서 규칙이 있어도 지금 연결이
@@ -129,7 +129,7 @@ Chk '방화벽 인바운드' ($null -ne $fw) $(if($fw){'허용됨'}else{'규칙 
 $prof = @(Get-NetConnectionProfile -ErrorAction SilentlyContinue)
 $priv = @($prof | Where-Object { $_.NetworkCategory -eq 'Private' })
 $profName = if ($prof) { ($prof | ForEach-Object { "$($_.InterfaceAlias)=$($_.NetworkCategory)" }) -join ', ' } else { '확인 불가' }
-Chk '네트워크 프로필' ($priv.Count -gt 0) $profName '설정 > 네트워크 및 인터넷 > 속성 > 네트워크 프로필 유형을 [개인]으로 변경'
+Chk '네트워크 프로필' ($priv.Count -gt 0) $profName '설정 > 네트워크 및 인터넷 > 속성 > 네트워크 프로필 유형을 [개인]으로 바꾸세요'
 
 $listening = Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue | Where-Object { $_.LocalPort -eq $cfg.port }
 Chk '카톡 릴레이 실행' ($null -ne $listening) $(if($listening){'동작 중'}else{'안 돌고 있음'}) '[카톡 릴레이] 창에서 [지금 켜기]를 누르세요'
@@ -142,21 +142,21 @@ Chk '카톡 릴레이 실행' ($null -ne $listening) $(if($listening){'동작 �
 $paused  = Test-Path (Join-Path $PSScriptRoot 'paused.marker')
 $stopped = Test-Path (Join-Path $PSScriptRoot 'stopped.marker')
 if ($stopped) {
-    Chk '문자 전달' $false '[카톡 릴레이]에서 프로그램을 끝낸 상태' '[카톡 릴레이] > [지금 켜기]'
+    Chk '문자 전달' $false '[카톡 릴레이]에서 프로그램을 끝낸 상태' '[카톡 릴레이] 창에서 [지금 켜기]를 누르세요'
 } else {
-    Chk '문자 전달' (-not $paused) $(if($paused){'일시 중지 - 문자를 받아도 전달하지 않음'}else{'전달 중'}) '[카톡 릴레이] > [문자 전달 다시 시작]'
+    Chk '문자 전달' (-not $paused) $(if($paused){'일시 중지 - 문자를 받아도 전달하지 않습니다'}else{'전달 중'}) '[카톡 릴레이] 창에서 [문자 전달 다시 시작]을 누르세요'
 }
 
 $task  = Get-ScheduledTask -TaskName 'KakaoRelay' -ErrorAction SilentlyContinue
 $watch = Get-ScheduledTask -TaskName 'KakaoRelayWatchdog' -ErrorAction SilentlyContinue
 $taskOk = ($null -ne $task) -and ($task.State -ne 'Disabled')
-Chk '로그온 자동실행' $taskOk `
+Chk '로그온 자동 실행' $taskOk `
     $(if(-not $task){'등록 안 됨'}elseif($task.State -eq 'Disabled'){'비활성 (작업 스케줄러에서 꺼져 있음)'}else{$task.State}) `
-    'program 폴더의 Setup.ps1을 마우스 오른쪽 > PowerShell로 실행'
+    'program 폴더의 Setup.ps1을 마우스 오른쪽 버튼 클릭 > PowerShell로 실행하세요'
 $watchOk = ($null -ne $watch) -and ($watch.State -ne 'Disabled')
-Chk '감시자' $watchOk `
+Chk '자동 복구' $watchOk `
     $(if(-not $watch){'등록 안 됨'}elseif($watch.State -eq 'Disabled'){'비활성 (작업 스케줄러에서 꺼져 있음)'}else{'동작 중'}) `
-    'program 폴더의 Setup.ps1을 마우스 오른쪽 > PowerShell로 실행'
+    'program 폴더의 Setup.ps1을 마우스 오른쪽 버튼 클릭 > PowerShell로 실행하세요'
 
 <#
   열려 있는 채팅방 목록.
@@ -185,5 +185,5 @@ if (-not $openRooms) {
 # --- 마무리 ---
 Write-Host ''
 if ($todo -eq 0) { Write-Host '모든 항목 통과. 문자만 들어오면 동작합니다.' -ForegroundColor Green }
-else { Write-Host "할 일 $todo 개 - 위의 -> 표시를 따라 하세요." -ForegroundColor Yellow }
+else { Write-Host "할 일 ${todo}개 - 위의 -> 표시를 따라 하세요." -ForegroundColor Yellow }
 Write-Host ''

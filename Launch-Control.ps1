@@ -701,7 +701,7 @@ function Set-Busy([string]$msg) {
     $script:uiMode = 'busy'
     $script:dotColor = $C.Amber
     $lblState.Text = $msg
-    $lblSub.Text = '잠시만 기다려 주세요.'
+    $lblSub.Text = '잠시만 기다리세요.'
     <#
       작업 중에는 버튼을 잠그기만 하고 감추지 않는다.
       감추면 배치가 다시 계산되면서 창 높이가 491 -> 295 로 줄었다가 되돌아온다.
@@ -849,7 +849,7 @@ $btnCfg.Add_Click({
         $script:dotColor = $C.Warn
         $lblState.Text = '설정 파일에 문제가 있습니다'
         $lblSub.Text   = '고친 부분을 되돌린 뒤 다시 누르세요.'
-        $lblHint.Text  = '쉼표나 따옴표가 빠졌을 수 있습니다. 지금 적용하면 릴레이가 실행되지 못합니다.'
+        $lblHint.Text  = '쉼표나 따옴표가 빠졌을 수 있습니다.'
         $sdot.Invalidate(); Set-Layout; $form.Refresh()
         return
     }

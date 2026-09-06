@@ -26,7 +26,7 @@ Say ''
 if (-not $Elevated) {
     $me = [Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()
     if (-not $me.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-        Say '  관리자 권한 창이 뜨면 [예]를 눌러 주세요.' 'Yellow'
+        Say '  관리자 권한 창이 뜨면 [예]를 누르세요.' 'Yellow'
         Say '  방화벽 규칙을 지우는 데 필요합니다.' 'DarkGray'
         try {
             Start-Process -FilePath 'powershell.exe' -Verb RunAs -ArgumentList `
@@ -108,7 +108,7 @@ Say ''
 Say '  ────────────────────────────────────────────────' 'DarkGray'
 Say '  컴퓨터에서 할 일은 끝났습니다.' 'Green'
 Say ''
-Say '  남은 것은 직접 지워 주세요.' 'White'
+Say '  남은 것은 직접 지우세요.' 'White'
 Say "     이 폴더 통째로   $root" 'Gray'
 Say '     중계 휴대폰의 MacroDroid 매크로' 'Gray'
 Say ''

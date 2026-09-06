@@ -4,7 +4,7 @@
     .\Export-Package.ps1                        바탕화면에 kakao-relay-setup 폴더로
     .\Export-Package.ps1                        dist\ 에 만든다 (기본)
     .\Export-Package.ps1 -Destination D:\share  지정한 경로로
-    .\Export-Package.ps1 -Zip                   zip 으로 압축까지
+    .\Export-Package.ps1                        폴더와 zip 을 함께 만듭니다
 
   받는 사람에게는 최상위에 배치 파일 하나만 보인다.
       KakaoRelay.bat  (설치 / 켜고 끄기 / 점검 / 설정을 모두 이 창에서 한다)
