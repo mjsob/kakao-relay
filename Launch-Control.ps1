@@ -607,7 +607,7 @@ function Sync-Ui {
         $script:dotColor = $C.Warn
         $lblState.Text = '설치 전'
         $lblSub.Text   = '설치에 1~2분이 걸립니다.'
-        $lblHint.Text  = "설치에는 관리자 권한이 필요합니다.`r`n창이 뜨면 [예] 를 눌러 주세요."
+        $lblHint.Text  = "설치에는 관리자 권한이 필요합니다.`r`n창이 뜨면 [예]를 누르세요."
         $btnMain.Text = '설치하기'
         $script:showMain = $true; $script:showStop = $false
         Set-Layout
@@ -629,20 +629,20 @@ function Sync-Ui {
         $script:dotColor = $C.Amber
         $lblState.Text = '카카오톡 꺼짐'
         $lblSub.Text   = '지금 문자가 오면 보내지 못합니다.'
-        $lblHint.Text  = "카카오톡을 실행하고 로그인해 주세요.`r`n로그인하면 저절로 다시 전달합니다."
+        $lblHint.Text  = "카카오톡을 실행하고 로그인하세요.`r`n로그인하면 저절로 다시 전달합니다."
         $script:showMain = $false; $script:showStop = $true
         Set-Layout
     } elseif ($s.Running) {
         $script:dotColor = $C.Ok
         $lblState.Text = '전달 중'
-        $k = if ($s.Kakao -eq $true) { '카카오톡 연결됨' } elseif ($s.Kakao -eq $false) { '카카오톡이 꺼져 있습니다' } else { '' }
+        $k = if ($s.Kakao -eq $true) { '카카오톡 연결됨' } elseif ($s.Kakao -eq $false) { '카카오톡 꺼짐' } else { '' }
         $u = Format-Uptime $s.Uptime
         <#
           '@이름' 으로 대상을 고정해 두면 그 뒤 문자는 방 이름 없이 그 방으로 간다.
           고정된 줄 모르고 엉뚱한 곳으로 보내는 일이 없도록 상태 줄에 함께 드러낸다.
           안내문 줄에만 적어 두면 눈에 잘 들어오지 않는다.
         #>
-        $pn = if ($s.Pins) { "고정: $($s.Pins)" } else { '' }
+        $pn = if ($s.Pins) { "대상: $($s.Pins)" } else { '' }
         $lblSub.Text = (@($k,$u,$pn) | Where-Object { $_ }) -join '  ·  '
         <#
           시험 모드는 방을 찾고 창을 여는 데까지 다 해 보고 마지막 전송만 건너뛴다.
@@ -657,7 +657,7 @@ function Sync-Ui {
             $btnMain.Text = '시험 모드 해제'
             $script:showMain = $true; $script:showStop = $false
             $lblHint.Text = if ($s.DryRoom) {
-                "마지막 문자가 향한 채팅방: [$($s.DryRoom)]`r`n맞으면 아래 버튼을 눌러 실제 전송을 켜세요."
+                "마지막 문자의 대상 채팅방: [$($s.DryRoom)]`r`n맞으면 아래 버튼을 눌러 실제 전송을 켜세요."
             } else {
                 "카카오톡으로 실제 전송하지 않습니다.`r`n문자를 한 통 보내 어느 채팅방으로 갈지 먼저 확인하세요."
             }
@@ -668,7 +668,7 @@ function Sync-Ui {
             #>
             # 고정된 대상은 위 상태 줄에 이미 적혀 있다. 여기서는 바꾸는 방법만 알린다.
             $lblHint.Text = if ($s.Pins) {
-                "문자로 '@채팅방' 을 보내면 대상을 바꾸고,`r`n'@' 만 보내면 고정을 풉니다."
+                "문자로 '@채팅방'을 보내면 대상을 바꾸고,`r`n'@'만 보내면 지정을 풉니다."
             } else {
                 "문자를 보내면 카카오톡으로 전달됩니다.`r`n이 창은 닫아도 계속 동작합니다."
             }
@@ -763,7 +763,7 @@ $btnMain.Add_Click({
             $script:dotColor = $C.Warn
             $script:uiMode = 'error'
             $lblState.Text = '시험 모드를 끄지 못했습니다'
-            $lblSub.Text   = '설정 파일이 열려 있으면 닫고 다시 눌러 주세요.'
+            $lblSub.Text   = '설정 파일이 열려 있으면 닫고 다시 누르세요.'
             $sdot.Invalidate(); $form.Refresh()
             return
         }
@@ -837,7 +837,7 @@ $btnCfg.Add_Click({
         $script:cfgEditing = $true
         $btnCfg.Text = '설정 적용'
         $btnCfg.ForeColor = $C.Amber
-        $lblHint.Text = "메모장에서 고치고 저장한 뒤 [설정 적용] 을 누르세요.`r`n누르기 전까지는 예전 설정으로 동작합니다."
+        $lblHint.Text = "메모장에서 고치고 저장한 뒤 [설정 적용]을 누르세요.`r`n누르기 전까지는 예전 설정으로 동작합니다."
         Set-Layout
         return
     }
@@ -848,8 +848,8 @@ $btnCfg.Add_Click({
     } catch {
         $script:dotColor = $C.Warn
         $lblState.Text = '설정 파일에 문제가 있습니다'
-        $lblSub.Text   = '고친 부분을 되돌린 뒤 다시 눌러 주세요.'
-        $lblHint.Text  = '쉼표나 따옴표가 빠졌을 수 있습니다. 지금 적용하면 릴레이가 뜨지 못합니다.'
+        $lblSub.Text   = '고친 부분을 되돌린 뒤 다시 누르세요.'
+        $lblHint.Text  = '쉼표나 따옴표가 빠졌을 수 있습니다. 지금 적용하면 릴레이가 실행되지 못합니다.'
         $sdot.Invalidate(); Set-Layout; $form.Refresh()
         return
     }
@@ -909,8 +909,8 @@ function Show-QuitConfirm {
     $script:uiMode = 'confirm'
     $script:dotColor = $C.Warn
     $lblState.Text = '프로그램을 끝낼까요?'
-    $lblSub.Text   = '작업 표시줄의 트레이 아이콘도 함께 사라집니다.'
-    $lblHint.Text  = "컴퓨터를 다시 켜면 저절로 실행됩니다.`r`n그 전에 다시 쓰려면 바탕 화면의 [카톡 릴레이] 를 여세요."
+    $lblSub.Text   = '작업 표시줄 오른쪽 끝의 알림 영역 아이콘도 함께 사라집니다.'
+    $lblHint.Text  = "컴퓨터를 다시 켜면 저절로 실행됩니다.`r`n그 전에 다시 쓰려면 바탕 화면의 [카톡 릴레이]를 여세요."
     $btnYes.Text = '끝내기'
     Set-Layout -Confirm
 }

@@ -360,7 +360,18 @@ function Parse-Command {
         @엄마 안녕    고정한 뒤 그 내용을 바로 보낸다
         @            고정을 푼다
     #>
-    if ($body.StartsWith('@')) {
+    <#
+      '@@' 로 시작하면 '@' 한 글자로 낮춰 내용으로 본다.
+
+      카카오톡 단톡방에서 '@everyone' 이나 '@홍길동' 같은 멘션은 늘 쓰는 기능인데,
+      '@' 를 대상 지정 명령으로만 읽으면 그런 문장을 보낼 방법이 아예 없어진다.
+      게다가 '@everyone' 은 'everyone' 이라는 방을 찾다 실패하므로,
+      사용자는 방 이름을 잘못 적은 줄 알고 헤매게 된다.
+    #>
+    if ($body.StartsWith('@@')) {
+        $body = $body.Substring(1)
+    }
+    elseif ($body.StartsWith('@')) {
         $rest = $body.Substring(1).Trim()
         if (-not $rest) { return @{ ok=$true; pinAction='clear' } }
         $sp   = $rest.IndexOf(' ')
@@ -381,6 +392,14 @@ function Parse-Command {
         $room = Resolve-Room $cfg.defaultRoom
         $text = $body
     } else {
+        <#
+          띄어쓰기가 없으면 방 이름만 온 것이다.
+          예전에는 '채팅방 이름 없음' 이라고 답했는데, 이름은 있고 내용이 없는 것이라
+          사실과 반대였다. 사용자는 멀쩡한 이름을 의심하게 된다.
+        #>
+        if ($body -notmatch '\s') {
+            return @{ ok=$false; error="보낼 내용 없음`n채팅방 이름만 왔음`n뒤에 내용을 붙여 보내기" }
+        }
         $r = Split-RoomAndText $body
         if (-not $r.room) {
             return @{ ok=$false; error="채팅방 이름 없음`n채팅방 내용  또는  @채팅방`n띄어쓰기로 구분" }
@@ -525,6 +544,30 @@ function Read-HttpRequest {
 $Script:ReplyTag = '[카톡]'
 
 <#
+  방금 내보낸 답장을 기억해 둔다.
+
+  답장이 되돌아오면 무시해야 하는데, '[카톡] 으로 시작하면 버린다' 로 판정하면
+  사람이 실제로 보내려던 '[카톡] 공지 확인' 같은 문자까지 조용히 삼킨다.
+  우리가 정말로 보낸 문장과 똑같을 때만 버리면 그런 오해가 없다.
+#>
+$Script:SentReplies = New-Object System.Collections.Generic.Queue[string]
+
+function Register-SentReply {
+    param([string]$body)
+    if (-not $body) { return }
+    $Script:SentReplies.Enqueue($body)
+    while ($Script:SentReplies.Count -gt 30) { [void]$Script:SentReplies.Dequeue() }
+}
+
+function Test-IsEchoOfReply {
+    param([string]$text)
+    if (-not $text) { return $false }
+    $t = $text.Trim()
+    foreach ($r in $Script:SentReplies) { if ($r.Trim() -eq $t) { return $true } }
+    return $false
+}
+
+<#
   답장 문자를 보낼지 여부. 설정의 smsReply 로 끌 수 있다(기본 켜짐).
 
   답장 한 통마다 문자 요금이 든다. 요금이 부담이면 여기서 끈다.
@@ -565,6 +608,8 @@ function Send-HttpResponse {
         $body = if ($Script:SmsReplyOn) { [string]$Payload['reply'] } else { '' }
         if (-not $body) { $body = 'OK' }
         $body = $Script:ReplyTag + ' ' + $body
+        # 이 문장이 문자로 되돌아오면 버릴 수 있게 기억해 둔다
+        Register-SentReply $body
         $bytes = [Text.Encoding]::UTF8.GetBytes($body)
         $text  = switch ($Status) { 200 { 'OK' } 400 { 'Bad Request' } 403 { 'Forbidden' } 404 { 'Not Found' } 503 { 'Service Unavailable' } default { 'OK' } }
         $head  = "HTTP/1.1 $Status $text`r`nContent-Type: text/plain; charset=utf-8`r`nContent-Length: $($bytes.Length)`r`nConnection: close`r`n`r`n"
@@ -657,7 +702,7 @@ function Handle-Sms {
       중복 차단은 이걸 못 막는다. 성공한 전송만 기록하기 때문이다.
       표식은 이미 붙여 보내고 있으니 들어올 때 그것만 보면 된다.
     #>
-    if ($text -and $text.TrimStart().StartsWith($Script:ReplyTag)) {
+    if (Test-IsEchoOfReply $text) {
         Write-Log "무시: 릴레이가 보낸 답장이 되돌아옴" 'WARN'
         return @{ ok = $true; error = $null; echo = $true; retryable = $false; silent = $true }
     }
@@ -670,13 +715,18 @@ function Handle-Sms {
         # silent: 답장 문자를 보내지 않는다.
         # 모르는 번호에서 온 문자에 답장하면 엉뚱한 사람에게 문자가 가고 요금도 나간다.
         return @{ ok = $false; retryable = $false; silent = $true
-                  error = '등록되지 않은 발신자입니다. PC 설정의 allowFrom 을 확인하세요.' }
+                  error = '발신자 미등록' + [char]10 + 'PC 설정의 allowFrom 확인' }
     }
 
     $dedupeKey = Get-DedupeKey -From $from -Text $text
     if (Test-AlreadySent $dedupeKey) {
         Write-Log "무시: 이미 전송된 메시지 (앱 재시도로 추정) '$text'" 'WARN'
-        return @{ ok = $true; error = $null; duplicate = $true; retryable = $false }
+        <#
+          조용히 버리면 사용자는 보낸 줄 안다.
+          성공에도 답장이 없으므로, 답장이 없다는 것만으로는 구분할 수 없다.
+        #>
+        return @{ ok = $true; error = $null; duplicate = $true; retryable = $false
+                  reply = '중복 무시' + [char]10 + '조금 전과 같은 문자' + [char]10 + '내용을 바꿔 다시 보내기' }
     }
 
     $joinMs = if ($cfg.PSObject.Properties.Name -contains 'joinWindowMs') { [int]$cfg.joinWindowMs } else { 0 }
@@ -883,7 +933,7 @@ function Test-KakaoRoom {
     #>
     if ($res.ok -and $res.unverified) {
         return @{ ok = $false; room = $null; missing = $false; retryable = $true
-                  error = '채팅방을 새 창으로 열도록 설정해야 대상을 확인할 수 있습니다 (카카오톡 설정 > 채팅).' }
+                  error = '새 창 열기 필요' + [char]10 + '카카오톡 설정 > 채팅에서 켜기' }
     }
     if ($res.ok) { return @{ ok = $true; room = $res.room; error = $null; retryable = $false; missing = $false } }
     <#
@@ -923,7 +973,7 @@ function Invoke-Send {
                  -DryRun:([bool]$cfg.dryRun) -AutoOpen:$auto -RowOffsets $offsets -SendButton $btn `
                  -SendMethod $method -KeepOpen:$keep -HideMain:$hideMain
         if ($res.ok) {
-            if ($attempt -gt 1) { Write-Log "재시도 $attempt 회차에 성공" 'SEND' }
+            if ($attempt -gt 1) { Write-Log "재시도 $attempt회 만에 성공" 'SEND' }
             break
         }
         if ($res.roomNotFound) {
@@ -993,7 +1043,7 @@ try {
 } catch {
     # 대개 릴레이가 이미 떠 있는 경우다. 스택 트레이스를 뱉고 죽는 대신 한 줄만 남기고 조용히 끝낸다.
     # (감시자가 포트를 보고 판단하므로, 이미 살아있다면 아무 문제 없다)
-    Write-Log "포트 $($cfg.port) 를 열 수 없음. 이미 실행 중이거나 다른 프로그램이 사용 중: $($_.Exception.Message)" 'WARN'
+    Write-Log "포트 $($cfg.port) 열기 실패. 이미 실행 중이거나 다른 프로그램이 사용 중: $($_.Exception.Message)" 'WARN'
     return
 }
 
@@ -1299,14 +1349,20 @@ try {
                       화면에 보일 값이다. 열쇠에 붙은 'name:' 은 내부 표시이므로 떼어낸다.
                       보내는 사람이 하나뿐이면 방 이름만 보여 주는 편이 읽기 쉽다.
                     #>
-                    pins        = $(
+                    <#
+                      고정 대상은 사람 이름과 채팅방 이름이다.
+                      /rooms 는 이 PC 에서만 답하도록 막아 놓고 여기로 새어 나가면 소용이 없다.
+                      조작 창과 감시자는 모두 이 PC 에서 붙으므로 잃는 기능이 없다.
+                    #>
+                    pins        = $(if ($peer -notlike '127.0.0.1:*') { $null } else {
                         if ($script:pins.Count -eq 0) { $null }
                         elseif ($script:pins.Count -eq 1) { @($script:pins.Values)[0] }
                         else {
                             ($script:pins.GetEnumerator() | ForEach-Object {
                                 "$($_.Key -replace '^name:','') → $($_.Value)"
                             }) -join ', '
-                        })
+                        }
+                    })
                     version    = $RelayVersion
                     pid        = $PID
                     windowMode = $winMode
@@ -1324,7 +1380,7 @@ try {
                   진단용이므로 이 PC 에서만 답한다.
                 #>
                 if ($peer -notlike '127.0.0.1:*') {
-                    Send-HttpResponse -stream $req.Stream -Status 403 -Payload @{ ok=$false; error='이 PC 에서만 볼 수 있습니다.' }
+                    Send-HttpResponse -stream $req.Stream -Status 403 -Payload @{ ok=$false; error='이 PC에서만 볼 수 있습니다.' }
                 } else {
                     $rooms = @(Get-KakaoRoomWindows | Select-Object -ExpandProperty Title)
                     Send-HttpResponse -stream $req.Stream -Payload @{ ok=$true; rooms=$rooms }
@@ -1349,7 +1405,7 @@ try {
                     Write-Log "거부: 허용되지 않은 발신번호 '$($f.from)'" 'WARN'
                     Send-HttpResponse -stream $req.Stream -Status 200 -PlainText:$plain `
                         -Payload @{ ok=$false; silent=$true; retryable=$false
-                                    error='등록되지 않은 발신자입니다. PC 설정의 allowFrom 을 확인하세요.' }
+                                    error='발신자 미등록' + [char]10 + 'PC 설정의 allowFrom 확인' }
                 }
                 elseif (Test-Paused) {
                     Write-Log "일시 중지 상태라 전달하지 않음: '$($f.text)'" 'WARN'

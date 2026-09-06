@@ -27,7 +27,7 @@ try {
 } catch {
     Write-Host ' 문제 ' -ForegroundColor Red -NoNewline
     Write-Host '설정 파일을 읽지 못했습니다.'
-    Write-Host '        -> [설정 편집] 에서 마지막에 고친 부분을 되돌리세요. 쉼표나 따옴표가 빠졌을 수 있습니다.' -ForegroundColor DarkGray
+    Write-Host '        -> [설정 편집]에서 마지막에 고친 부분을 되돌리세요. 쉼표나 따옴표가 빠졌을 수 있습니다.' -ForegroundColor DarkGray
     Write-Host "        -> $cfgPath" -ForegroundColor DarkGray
     Write-Host ''
     Read-Host '  엔터를 누르면 창이 닫힙니다'
@@ -46,7 +46,7 @@ function Chk([string]$name, [bool]$ok, [string]$detail, [string]$fix = '') {
     foreach ($c in $name.ToCharArray()) { $w += if ([int]$c -gt 0x1100) { 2 } else { 1 } }
     $pad = ' ' * [Math]::Max(0, 22 - $w)
 
-    $mark = if ($ok) { '  OK  ' } else { ' 할일 ' }
+    $mark = if ($ok) { '  OK  ' } else { '할 일 ' }
     $col  = if ($ok) { 'Green' } else { 'Yellow' }
     Write-Host $mark -ForegroundColor $col -NoNewline
     Write-Host "$name$pad $detail"
@@ -69,7 +69,7 @@ $needPw = if ($cfg.PSObject.Properties.Name -contains 'requirePassword') { [bool
 if ($needPw) {
     Chk '비밀번호' ($cfg.password -ne 'CHANGE_ME' -and $cfg.password.Length -ge 4) `
         $(if($cfg.password -eq 'CHANGE_ME'){'기본값 그대로'}else{"설정됨 ($($cfg.password.Length)자)"}) `
-        '[카톡 릴레이] > [설정 편집] 에서 password 변경'
+        '[카톡 릴레이] > [설정 편집]에서 password 변경'
 } else {
     Chk '비밀번호' $true '사용 안 함 (문자 형식: 채팅방 내용)' ''
 }
@@ -77,11 +77,20 @@ if ($needPw) {
 $allow = @($cfg.allowFrom | Where-Object { $_ -and $_ -ne '010-0000-0000' })
 Chk '허용 발신번호' ($allow.Count -gt 0) `
     $(if($allow.Count){$allow -join ', '}else{'예시 번호 그대로'}) `
-    '[카톡 릴레이] > [설정 편집]에서 allowFrom 에 문자를 보낼 번호를 넣으세요'
+    '[카톡 릴레이] > [설정 편집]에서 allowFrom에 문자를 보낼 번호를 넣으세요'
 
 # 조작 창에 [시험 모드 해제] 버튼이 있다. 메모장으로 JSON 을 고치게 하면 안 된다.
 Chk '시험 모드' (-not $cfg.dryRun) $(if($cfg.dryRun){'켜짐 - 카카오톡으로 실제 전송하지 않음'}else{'꺼짐'}) `
     '[카톡 릴레이] 창에서 [시험 모드 해제]를 누르세요'
+
+<#
+  sendMethod 가 enter 면 진짜 포커스가 있어야 전송된다.
+  릴레이는 숨어서 도는데 다른 창이 앞에 있으면 Enter 가 그 창으로 가 버려,
+  글자는 입력창에 들어갔는데 전송만 안 되는 상태가 된다. 원인을 찾기 매우 어렵다.
+#>
+$sm = if ($cfg.PSObject.Properties.Name -contains 'sendMethod') { [string]$cfg.sendMethod } else { 'auto' }
+Chk '전송 방법' ($sm -ne 'enter') $sm `
+    '[카톡 릴레이] > [설정 편집]에서 sendMethod 를 auto 로 바꾸세요. enter 는 다른 창이 앞에 있으면 실패합니다'
 
 $aliasCount = @($cfg.aliases.PSObject.Properties).Count
 # 별칭이 없어도 전체 채팅방 이름으로 보내면 되므로 실패로 취급하지 않는다
@@ -90,7 +99,7 @@ Chk '채팅방 별칭' $true $(if($aliasCount -gt 0){"$aliasCount 개 등록"}el
 # --- 별칭이 가리키는 방이 실제로 열리는지 ---
 foreach ($a in $cfg.aliases.PSObject.Properties) {
     $found = $null -ne (Find-KakaoRoomWindow -Room $a.Value)
-    Chk "  별칭 '$($a.Name)'" $true "-> '$($a.Value)'$(if($found){' (창 열려있음)'}else{' (자동열기로 처리)'})" ''
+    Chk "  별칭 '$($a.Name)'" $true "-> '$($a.Value)'$(if($found){' (창 열려 있음)'}else{' (자동열기로 처리)'})" ''
 }
 
 # --- 네트워크 ---
@@ -101,7 +110,7 @@ $ip = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object {
 Chk 'LAN IP' ($null -ne $ip) $(if($ip){"$ip -> http://$ip`:$($cfg.port)/sms"}else{'못 찾음'}) '공유기에서 DHCP 고정 할당 권장'
 
 $fw = Get-NetFirewallRule -DisplayName "KakaoRelay ($($cfg.port))" -ErrorAction SilentlyContinue
-Chk '방화벽 인바운드' ($null -ne $fw) $(if($fw){'허용됨'}else{'규칙 없음'}) 'program 폴더의 Setup.ps1 을 마우스 오른쪽 > PowerShell로 실행 (관리자 권한 필요)'
+Chk '방화벽 인바운드' ($null -ne $fw) $(if($fw){'허용됨'}else{'규칙 없음'}) 'program 폴더의 Setup.ps1을 마우스 오른쪽 > PowerShell로 실행 (관리자 권한 필요)'
 
 <#
   방화벽 규칙은 '개인' 프로필에만 만든다. 그래서 규칙이 있어도 지금 연결이
@@ -111,7 +120,7 @@ Chk '방화벽 인바운드' ($null -ne $fw) $(if($fw){'허용됨'}else{'규칙 
 $prof = @(Get-NetConnectionProfile -ErrorAction SilentlyContinue)
 $priv = @($prof | Where-Object { $_.NetworkCategory -eq 'Private' })
 $profName = if ($prof) { ($prof | ForEach-Object { "$($_.InterfaceAlias)=$($_.NetworkCategory)" }) -join ', ' } else { '확인 불가' }
-Chk '네트워크 프로필' ($priv.Count -gt 0) $profName '설정 > 네트워크 및 인터넷 > 속성 > 네트워크 프로필 유형을 [개인] 으로 변경'
+Chk '네트워크 프로필' ($priv.Count -gt 0) $profName '설정 > 네트워크 및 인터넷 > 속성 > 네트워크 프로필 유형을 [개인]으로 변경'
 
 $listening = Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue | Where-Object { $_.LocalPort -eq $cfg.port }
 Chk '카톡 릴레이 실행' ($null -ne $listening) $(if($listening){'동작 중'}else{'안 돌고 있음'}) '[카톡 릴레이] 창에서 [지금 켜기]를 누르세요'
@@ -124,7 +133,7 @@ Chk '카톡 릴레이 실행' ($null -ne $listening) $(if($listening){'동작 �
 $paused  = Test-Path (Join-Path $PSScriptRoot 'paused.marker')
 $stopped = Test-Path (Join-Path $PSScriptRoot 'stopped.marker')
 if ($stopped) {
-    Chk '문자 전달' $false '[카톡 릴레이] 에서 프로그램을 끝낸 상태' '[카톡 릴레이] > [지금 다시 실행]'
+    Chk '문자 전달' $false '[카톡 릴레이]에서 프로그램을 끝낸 상태' '[카톡 릴레이] > [지금 켜기]'
 } else {
     Chk '문자 전달' (-not $paused) $(if($paused){'일시 중지 - 문자를 받아도 전달하지 않음'}else{'전달 중'}) '[카톡 릴레이] > [문자 전달 다시 시작]'
 }
@@ -133,12 +142,12 @@ $task  = Get-ScheduledTask -TaskName 'KakaoRelay' -ErrorAction SilentlyContinue
 $watch = Get-ScheduledTask -TaskName 'KakaoRelayWatchdog' -ErrorAction SilentlyContinue
 $taskOk = ($null -ne $task) -and ($task.State -ne 'Disabled')
 Chk '로그온 자동실행' $taskOk `
-    $(if(-not $task){'등록 안 됨'}elseif($task.State -eq 'Disabled'){'비활성 ([프로그램 완전히 끝내기] 로 끈 상태)'}else{$task.State}) `
-    'program 폴더의 Setup.ps1 을 마우스 오른쪽 > PowerShell로 실행'
+    $(if(-not $task){'등록 안 됨'}elseif($task.State -eq 'Disabled'){'비활성 (작업 스케줄러에서 꺼져 있음)'}else{$task.State}) `
+    'program 폴더의 Setup.ps1을 마우스 오른쪽 > PowerShell로 실행'
 $watchOk = ($null -ne $watch) -and ($watch.State -ne 'Disabled')
 Chk '감시자' $watchOk `
-    $(if(-not $watch){'등록 안 됨'}elseif($watch.State -eq 'Disabled'){'비활성 ([프로그램 완전히 끝내기] 로 끈 상태)'}else{'동작 중'}) `
-    'program 폴더의 Setup.ps1 을 마우스 오른쪽 > PowerShell로 실행'
+    $(if(-not $watch){'등록 안 됨'}elseif($watch.State -eq 'Disabled'){'비활성 (작업 스케줄러에서 꺼져 있음)'}else{'동작 중'}) `
+    'program 폴더의 Setup.ps1을 마우스 오른쪽 > PowerShell로 실행'
 
 <#
   열려 있는 채팅방 목록.

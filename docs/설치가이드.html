@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}</style></head><body>
+<!doctype html><html lang="ko"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}</style></head><body>
 <title>카톡 릴레이</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -753,7 +753,61 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
   position:absolute;width:1px;height:1px;margin:-1px;padding:0;
   overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;
 }
+
+/* ---------- 중간 폭 ----------
+   굵게 쓴 UI 이름을 한 덩어리로 묶어 두는데, 가로로 돌린 폰이나 반쪽 창에서는
+   그 덩어리가 표를 밀어낸다. 960px 아래에서는 풀어 준다. */
+@media (max-width:960px){
+  p b,li b,td b,dd b,.u{white-space:normal}
+  p code,li code,td code,th code,dd code{white-space:normal;overflow-wrap:anywhere}
+  tbody th[scope="row"]{width:auto;min-width:7rem}
+}
+
+/* ---------- 인쇄 ----------
+   어두운 테마로 보던 사람이 그대로 인쇄하면 흰 종이에 흰 글씨가 찍힌다.
+   종이에는 가로 스크롤이 없어서, 넘치는 코드와 표는 잘려서 사라진다.
+   하필 잘리는 것이 폰에 옮겨 적어야 할 주소다. */
+@media print{
+  :root,
+  :root[data-theme="dark"],
+  :root:not([data-theme="light"]){
+    color-scheme:light;
+    --bg:#fff; --surface:#fff; --sunken:#F4F1E9;
+    --ink:#000; --ink-2:#1f1c19; --muted:#3f3a34;
+    --line:#b9b2a6; --line-2:#8b8377;
+    --accent:#6B4600; --accent-2:#4a3000; --accent-bg:#fff; --accent-line:#a58c53;
+    --warn:#8a1f18;  --warn-bg:#fff;  --warn-line:#bc8a83;
+    --must:#5c3e00;  --must-bg:#fff;  --must-line:#ad964f;
+    --ok:#14503a;
+  }
+  body{background:#fff;color:#000;font-size:10.5pt;line-height:1.6}
+
+  pre{white-space:pre-wrap;overflow-wrap:anywhere;overflow:visible;padding-right:17px}
+  .tw{overflow:visible}
+  dl.fields dd{overflow-wrap:anywhere}
+
+  .copy,.totop,.iprow,.toc-m{display:none!important}
+  .dl{background:#fff;color:#000;border:1.5px solid #000;box-shadow:none}
+
+  .wrap{display:block;max-width:none;padding:0}
+  .toc{display:block!important;position:static;padding-top:0;margin:24px 0 0;
+       columns:2;column-gap:32px;break-inside:avoid}
+  .toc a{color:#000}
+
+  /* 종이에서는 눌러 볼 수 없으므로 주소를 함께 찍는다 */
+  a[href^="http"]::after{
+    content:" (" attr(href) ")";
+    font-size:.82em;color:#3f3a34;overflow-wrap:anywhere;
+  }
+
+  main{padding-top:0}
+  h1,h2,h3,h4{break-after:avoid}
+  .cal,.codewrap,dl.fields>div,ol.steps>li,tr{break-inside:avoid}
+  thead{display:table-header-group}
+}
 </style>
+
+<noscript><style>.iprow{display:none}</style></noscript>
 
 <div class="wrap" lang="ko">
 
@@ -809,6 +863,8 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
           <li><a href="#s9"><i>09</i>문제 해결</a></li>
           <li><a href="#s10"><i>10</i>제한 사항</a></li>
           <li><a href="#s11"><i>11</i>보안과 개인정보</a></li>
+          <li><a href="#s12"><i>12</i>새 판으로 올리기</a></li>
+          <li><a href="#s13"><i>13</i>지우기</a></li>
         </ol>
       </div>
     </details>
@@ -831,6 +887,8 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
       <li><a href="#s9"><i>09</i>문제 해결</a></li>
       <li><a href="#s10"><i>10</i>제한 사항</a></li>
       <li><a href="#s11"><i>11</i>보안과 개인정보</a></li>
+      <li><a href="#s12"><i>12</i>새 판으로 올리기</a></li>
+      <li><a href="#s13"><i>13</i>지우기</a></li>
     </ol>
   </nav>
 
@@ -852,7 +910,7 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
             </tr>
             <tr>
               <th scope="row">중계 휴대폰</th>
-              <td>안드로이드 단말이 필요합니다. 문자를 받을 수 있는 유심을 넣어 두세요. 문자 수신은 무료이므로 데이터 제공량이 없는 최저 요금제로도 충분합니다.</td>
+              <td>안드로이드 공기계가 필요합니다. 문자를 받을 수 있는 유심을 넣어 두세요. 문자 수신은 무료이므로 데이터 제공량이 없는 최저 요금제로도 충분합니다.</td>
             </tr>
             <tr>
               <th scope="row">Wi-Fi</th>
@@ -874,7 +932,7 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
       <h3>PC를 두 대에서 쓴다면</h3>
       <p>
         카카오톡 PC는 <span class="u">계정 하나당 한 대에서만</span> 로그인됩니다.
-        릴레이 PC가 로그인해 두면 다른 PC에서는 같은 계정으로 대화를 볼 수 없습니다.
+        릴레이 PC에서 로그인해 두면 다른 PC에서는 같은 계정으로 대화를 볼 수 없습니다.
         떨어져 있는 다른 PC에서도 대화를 봐야 한다면 시작하기 전에 계정을 하나 더 준비하세요.
       </p>
       <div class="tw">
@@ -1020,11 +1078,19 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
         </li>
         <li>
           <b>매크로 만들기</b>
-          <p><b>+</b> 버튼을 눌러 새 매크로를 만든 다음, 아래의 트리거와 액션을 설정하세요.</p>
+          <p>MacroDroid는 <b>이런 일이 생기면(트리거) → 이렇게 해라(액션)</b>를 한 묶음으로 저장해 두는 앱입니다.
+            그 묶음 하나를 <b>매크로</b>라고 부릅니다.
+            여기서 만들 매크로는 하나뿐입니다 &mdash; <b>문자가 오면 그 내용을 PC로 넘겨라.</b></p>
+          <p>앱을 열고 오른쪽 아래 <b>+</b>를 누르면 편집 화면이 나옵니다.
+            그 화면에는 <b>트리거</b>, <b>액션</b>, <b>제약</b> 세 칸이 있고, 각 칸의 <b>+</b>로 항목을 더합니다.
+            아래 표의 값을 그 칸에 하나씩 넣으면 됩니다.</p>
         </li>
         <li>
-          <b>알림 접근 권한 허용</b>
-          <p>권한 요청 화면이 나타나면 목록에서 <b>MacroDroid</b>를 활성화하세요.</p>
+          <b>문자 권한 허용</b>
+          <p><b>SMS 수신</b> 트리거를 쓰려면 문자를 읽는 권한이 필요합니다.
+            권한 요청 화면이 나타나면 허용하세요.
+            나중에 확인하려면 <b>설정 &gt; 애플리케이션 &gt; MacroDroid &gt; 권한 &gt; SMS</b>를 보면 됩니다.</p>
+          <p>권장하지 않는 <b>알림</b> 방식을 고른 경우에만 <b>알림 접근</b> 권한이 따로 필요합니다.</p>
         </li>
         <li>
           <b>절전 최적화 해제</b>
@@ -1059,7 +1125,7 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
         </div>
 
         <div class="cal cal--must">
-          <b class="cal-h">알림 방식은 지난 문자가 다시 전달되는 일이 있습니다.</b>
+          <b class="cal-h">알림 방식에서는 지난 문자가 다시 전달되는 일이 있습니다.</b>
           <p>안드로이드는 휴대폰을 다시 켜거나 문자 앱이 재시작되면
             <b>읽지 않은 알림을 알림창에 다시 올립니다.</b>
             MacroDroid는 그것을 새 알림으로 보고 다시 전달합니다.
@@ -1078,10 +1144,15 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
         </div>
 
         <h4>SMS 수신 <span class="tag tag--rec">권장</span></h4>
+        <p><b>트리거</b> 칸의 <b>+</b>를 누르고 <b>연결성 &gt; SMS 수신</b>을 고르세요.
+          발신자를 묻는 화면이 나오면 <b>임의의 번호</b>를 고르고,
+          메시지 내용을 묻는 화면에서는 아무것도 넣지 말고 확인을 누릅니다.</p>
         <dl class="fields">
           <div><dt>트리거 종류</dt><dd>SMS 수신</dd></div>
           <div><dt>그 외 조건</dt><dd>설정하지 않음</dd></div>
         </dl>
+        <p>이어서 <b>액션</b> 칸의 <b>+</b>를 누르고 <b>연결성 &gt; HTTP 요청</b>을 고르세요.
+          아래 값은 모두 그 화면에 넣습니다.</p>
         <dl class="fields">
           <div><dt>요청 방식</dt><dd>POST</dd></div>
           <div><dt>URL</dt><dd>http://<span data-ip>내 IP 주소</span>:8787/sms?from=<b>[SMS 번호]</b>&amp;reply=text</dd></div>
@@ -1089,10 +1160,19 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
           <div><dt>본문</dt><dd><b>[SMS 메시지]</b></dd></div>
           <div><dt>제한 시간</dt><dd>120초</dd></div>
         </dl>
-        <p>굵게 표시한 두 칸은 직접 입력하지 말고, 입력란 옆의
+        <p>굵게 표시한 두 칸은 직접 입력하지 말고, 입력란 <b>오른쪽 끝</b>의
           <b>매직 텍스트</b>(<code>{ }</code> 모양 버튼)를 눌러 목록에서
           <b>SMS 번호</b>와 <b>SMS 메시지</b>를 고르세요.
-          <a href="#s5">05 설정 파일 편집</a>의 <code>allowFrom</code>에는 <b>전화번호</b>를 적습니다.</p>
+          문자가 올 때마다 그 자리에 실제 번호와 내용이 채워집니다.</p>
+        <div class="cal cal--must">
+          <b class="cal-h">고르고 나면 이 문서와 다른 글자가 들어갑니다. 그것이 정상입니다.</b>
+          <p>목록에서 <b>SMS 번호</b>를 고르면 입력란에는 <code>[sms_number]</code>처럼
+            이 문서의 표기와 다른 형태로 들어갑니다.
+            <b>지우고 한글로 고쳐 쓰지 마세요.</b> 그 순간 매크로가 조용히 고장 납니다.</p>
+          <p>이 문서가 <code>[SMS 번호]</code>라고 적은 것은 <b>목록에서 골라야 할 항목의 이름</b>이지,
+            입력란에 그대로 입력할 글자가 아닙니다.</p>
+        </div>
+        <p><a href="#s5">05 설정 파일 편집</a>의 <code>allowFrom</code>에는 <b>전화번호</b>를 적습니다.</p>
         <p>URL 끝의 <code>&amp;reply=text</code>는 아래 <b>결과를 문자로 돌려받기</b>에 필요합니다.
           그 기능을 쓰지 않더라도 붙여 두면 됩니다.</p>
 
@@ -1111,7 +1191,7 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
         </dl>
 
         <div class="cal cal--warn">
-          <b class="cal-h">장문을 꼭 보내야 한다면 알림 방식뿐이지만, 권하지 않습니다.</b>
+          <b class="cal-h">장문을 꼭 보내야 한다면 알림 방식밖에 없지만, 권하지 않습니다.</b>
           <p>알림 방식으로 바꾸면 장문도 전달됩니다. 다만 아래를 모두 감수해야 합니다.</p>
           <ul>
             <li><b>지난 문자가 다시 전달됩니다.</b> 휴대폰을 다시 켜면 안드로이드가 읽지 않은 알림을
@@ -1159,7 +1239,13 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
           이 때문에 같은 문자가 두 번 전송됩니다.</p>
       </div>
 
-      <h3>결과를 문자로 돌려받기 <span class="tag tag--opt">선택</span></h3>
+      <h3>결과를 문자로 돌려받기 <span class="tag tag--rec">권장</span></h3>
+      <div class="cal cal--must">
+        <b class="cal-h">이 설정을 하지 않으면 실패해도 보낸 사람은 전혀 알 수 없습니다.</b>
+        <p>채팅방 이름이 틀렸든 PC가 꺼져 있든, 문자를 보낸 쪽에는 아무 반응이 없습니다.
+          요금이 부담이면 나중에 <code>smsReply</code>를 <code>false</code>로 꺼도 되니
+          <b>설정만은 지금 해 두세요.</b></p>
+      </div>
       <p>중계 휴대폰은 문자를 넘기기만 할 뿐, 그 문자가 카카오톡으로 잘 갔는지는 보낸 사람에게 알려 주지 않습니다.
         릴레이의 응답을 문자로 되돌려 보내도록 해 두면
         <b>대상이 어디로 지정되었는지</b>와 <b>전달에 실패했는지</b>를 보낸 사람이 바로 알 수 있습니다.</p>
@@ -1207,7 +1293,7 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
       <p>릴레이가 돌려주는 답장은 모두 <code>[카톡]</code>으로 시작합니다.
         PC가 꺼져 있으면 요청 자체가 실패하는데, 이때 MacroDroid는 응답 변수를
         <code>java.net.SocketException ...</code> 같은 <b>자기 오류 메시지로 덮어씁니다.</b>
-        그대로 두면 그 문장이 문자로 나가므로, <code>[카톡]</code>이 붙어 있는지로 갈라 줍니다.</p>
+        그대로 두면 그 문장이 문자로 나가므로, <code>[카톡]</code>이 붙어 있는지로 구분합니다.</p>
 
       <p>위에서 만든 <b>SMS 수신</b> 매크로에 액션을 더합니다. 순서가 중요합니다.</p>
       <ol class="steps" role="list">
@@ -1254,16 +1340,29 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
         </li>
       </ol>
 
+      <div class="cal cal--must">
+        <b class="cal-h">순서가 다르면 끌어다 옮기고, 마지막에 저장하세요.</b>
+        <p>액션은 넣은 순서대로 실행됩니다. HTTP 요청을 먼저 만들었다면
+          <b>변수 설정</b>을 <b>길게 눌러</b> 맨 위로 끌어올리세요.</p>
+        <p>다 넣은 뒤 오른쪽 위 <b>저장</b>을 누르고 매크로 이름을 정해야 저장됩니다.
+          이름을 정하지 않고 화면을 벗어나면 지금까지 만든 것이 사라집니다.
+          저장한 뒤 매크로 목록에서 <b>스위치가 켜져 있는지</b> 확인하세요.</p>
+        <p><b>조건문 종료</b>를 빠뜨리면 그 뒤 액션이 모두 조건 안으로 들어가
+          정상 전달일 때도 문자가 잘못 나갑니다.
+          반대로 <b>조건문 IF</b>를 넣을 때 종료가 함께 생기는 경우가 있으니,
+          이미 있으면 새로 넣지 마세요.</p>
+      </div>
+
       <p>다 만들면 이런 모양이 됩니다.</p>
       <div class="codewrap">
 <pre>트리거   SMS 수신
 
 1  변수 설정      답장 = 없음
 2  HTTP 요청      ...&amp;reply=text   응답 → [답장]
-3  조건문 IF      답장 이(가) [카톡] 을 포함하지 않음
+3  조건문 IF      답장 이(가) [카톡]을 포함하지 않음
 4    변수 설정    답장 = [카톡] PC 응답 없음 · 전원/Wi-Fi 확인
 5  조건문 종료
-6  조건문 IF      답장 이(가) [카톡] OK 와 같지 않음
+6  조건문 IF      답장 이(가) [카톡] OK와 같지 않음
 7    SMS 보내기   [SMS 번호] / [답장]
 8  조건문 종료</pre>
       </div>
@@ -1271,11 +1370,12 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
       <div class="cal cal--must">
         <b class="cal-h">MacroDroid에 문자 보내기 권한을 주세요.</b>
         <p>권한이 없으면 <b>SMS 보내기</b> 액션이 아무 표시 없이 넘어갑니다.
-          안드로이드 설정의 앱 권한에서 <b>SMS</b>를 허용하세요.</p>
+          <b>설정 &gt; 애플리케이션 &gt; MacroDroid &gt; 권한 &gt; SMS</b>에서 허용하세요.
+          문자를 받을 때도 보낼 때도 이 권한이 필요합니다.</p>
       </div>
 
       <div class="cal cal--tip">
-        <b class="cal-h">답장이 부담이면 끄면 됩니다.</b>
+        <b class="cal-h">답장이 부담이면 꺼도 됩니다.</b>
         <p>답장 한 통마다 문자 요금이 듭니다.
           <a href="#s5">05 설정 파일 편집</a>에서 <code>"smsReply": false</code>로 하면
           릴레이가 언제나 <code>[카톡] OK</code>만 돌려주므로 문자가 나가지 않습니다.
@@ -1305,7 +1405,7 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
           규칙이 없다고 나오면 <code>program</code> 폴더의 <code>Setup.ps1</code>을
           <b>마우스 오른쪽 버튼 클릭 &gt; PowerShell로 실행</b>하세요.
           권한 창이 나타나면 <b>[예]</b>를 선택합니다.</li>
-        <li><code>허용되지 않은 접속입니다</code>라는 응답이 표시되면 PC까지는 닿았지만 IP가 허용 목록에 없는 상태입니다.
+        <li><code>접속 거부</code>라는 응답이 표시되면 PC까지는 닿았지만 IP가 허용 목록에 없는 상태입니다.
           <a href="#s9">09 문제 해결</a>을 참고해 <code>allowIPs</code>를 수정하세요.</li>
       </ul>
     </section>
@@ -1324,28 +1424,35 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
 
       <div class="cal cal--must">
         <b class="cal-h">이 단계를 건너뛰면 모든 문자가 차단됩니다.</b>
-        <p>알림에는 전화번호가 포함되지 않습니다. 그래서 URL의 <code>from</code> 값으로 알림 제목,
-          즉 보낸 사람 이름이 담기는 <code>{not_title}</code>을 사용합니다.</p>
-        <p>반면 설치할 때 저장되는 값은 전화번호뿐입니다.</p>
-        <p>발신 번호가 중계 휴대폰의 연락처에 저장되어 있다면,
-          <code>allowFrom</code>에 <b>그 연락처 이름</b>을 반드시 추가하세요.</p>
+        <p>릴레이는 <code>allowFrom</code>에 적힌 상대의 문자만 전달합니다.
+          여기에 아무것도 없거나 값이 틀리면, 문자를 아무리 보내도 조용히 거부됩니다.</p>
       </div>
+
+      <p><a href="#s3">03 중계 휴대폰 설정</a>에서 권장한 대로 <b>SMS 수신</b> 방식을 골랐다면
+        <b>문자를 보낼 휴대폰의 전화번호</b>를 그대로 적으면 됩니다. 이것으로 끝입니다.</p>
 
       <div class="codewrap">
-<pre>"allowFrom": ["01012345678", "홍길동"]</pre>
+<pre>"allowFrom": ["01012345678"]</pre>
       </div>
-      <ul>
-        <li>발신 번호가 연락처에 저장되어 있으면 그 이름이 전달됩니다 → 이름을 등록하세요.</li>
-        <li>저장되어 있지 않으면 번호가 그대로 전달됩니다 → 번호를 등록하세요.</li>
-        <li>어느 쪽이 전달될지 확신이 서지 않으면 둘 다 등록하세요.</li>
-      </ul>
 
-      <div class="cal cal--warn">
-        <b class="cal-h">연락처 이름을 바꾸면 설정 파일도 함께 수정해야 합니다.</b>
-        <p><code>SMS 수신</code> 트리거를 쓴다면 이름 대신 <b>전화번호</b>를 적으면 됩니다.
-          번호는 바뀌지 않으므로 이 문제가 없습니다.</p>
-        <p>이름을 변경한 뒤 <code>allowFrom</code>을 갱신하지 않으면
-          릴레이가 그 문자를 <b>등록되지 않은 발신자</b>로 보고 차단합니다.</p>
+      <p>번호는 <code>010-1234-5678</code>처럼 붙임표(하이픈)를 넣어도 되고 빼도 됩니다.
+        여러 사람이 쓴다면 쉼표로 이어 적으세요.</p>
+
+      <div class="codewrap">
+<pre>"allowFrom": ["01012345678", "01098765432"]</pre>
+      </div>
+
+      <div class="cal cal--tip">
+        <b class="cal-h">알림 방식을 고른 경우에만 해당합니다.</b>
+        <p>알림에는 전화번호가 아니라 <b>연락처에 저장된 이름</b>이 담깁니다.
+          그래서 알림 방식에서는 <code>allowFrom</code>에도 이름을 적어야 합니다.</p>
+        <div class="codewrap">
+<pre>"allowFrom": ["홍길동"]</pre>
+        </div>
+        <p>어느 쪽이 올지 확신이 서지 않으면 번호와 이름을 둘 다 적어 두면 됩니다.
+          다만 <b>연락처 이름을 바꾸면 이 설정도 함께 고쳐야</b> 합니다.
+          그 번호를 중계 휴대폰 연락처에서 아예 지우면 번호가 전달되므로,
+          이름 대신 번호로 관리할 수 있습니다.</p>
       </div>
 
       <div class="cal cal--must">
@@ -1377,7 +1484,7 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
       </div>
 
       <div class="cal cal--warn">
-        <b class="cal-h">별칭이 가리키는 <span class="u">실제 채팅방 이름</span>은 한 글자짜리나 다른 방 이름의 앞부분이 되는 이름을 피하세요.</b>
+        <b class="cal-h">별칭이 가리키는 <span class="u">실제 채팅방 이름</span>으로는, 한 글자짜리나 다른 방 이름의 앞부분이 되는 이름을 피하세요.</b>
         <p>릴레이는 이름이 정확히 일치하는 방을 먼저 찾고, 없으면 그 이름으로
           <b>시작하는</b> 방을 찾습니다. 이름이 짧을수록 다른 방에 먼저 걸릴 위험이 커집니다.</p>
         <p>예를 들어 <code>나</code>는 <code>나와의 채팅</code>에도 걸리므로
@@ -1386,7 +1493,7 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
 
       <h3>답장 문자 끄기<span class="tag tag--opt">선택</span></h3>
       <p>대상 지정 결과와 전달 실패를 문자로 알려 주는 기능입니다.
-        답장 한 통마다 문자 요금이 드니, 부담이면 꺼 두세요.</p>
+        답장 한 통마다 문자 요금이 들므로, 부담이면 꺼 두세요.</p>
       <div class="codewrap">
 <pre>"smsReply": false</pre>
       </div>
@@ -1467,7 +1574,7 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
       </div>
 
       <div class="cal cal--must">
-        <b class="cal-h">맨 처음 띄어쓰기가 채팅방 이름과 내용을 가릅니다.</b>
+        <b class="cal-h">맨 처음 띄어쓰기가 채팅방 이름과 내용을 구분합니다.</b>
         <p>문자의 <b>첫 낱말</b>이 채팅방 이름이고, <b>그 뒤 전부</b>가 보낼 내용입니다.
           규칙은 이것 하나뿐입니다.</p>
       </div>
@@ -1519,7 +1626,7 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
           문자 전체가 보낼 내용이 되므로 첫 낱말이 사라질 걱정이 없습니다.</li>
         <li>보내는 사람마다 따로 기억합니다. 여러 사람이 같은 릴레이를 써도 대상이 섞이지 않습니다.</li>
         <li>릴레이를 다시 켜도, 컴퓨터를 다시 켜도 유지됩니다.</li>
-        <li>지금 지정된 대상은 <b>카톡 릴레이</b> 창의 상태 줄에 <code>고정: 엄마</code>처럼 표시됩니다.</li>
+        <li>지금 지정된 대상은 <b>카톡 릴레이</b> 창의 상태 줄에 <code>대상: 엄마</code>처럼 표시됩니다.</li>
         <li><a href="#s3">03 중계 휴대폰 설정</a>의 <b>결과를 문자로 돌려받기</b>를 해 두면,
           지정할 때마다 어느 채팅방으로 가는지 문자로 답장이 옵니다.</li>
       </ul>
@@ -1539,6 +1646,22 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
         <p>다른 사람에게 보내려면 <code>@</code>로 대상을 바꾸거나 지정을 풀어야 합니다.
           <a href="#s3">03 중계 휴대폰 설정</a>에서 <b>SMS 수신</b> 방식을 권하는 이유가 여기에 있습니다.
           알림 방식은 지난 <code>@</code> 문자가 다시 전달되면서 대상이 조용히 바뀔 수 있습니다.</p>
+      </div>
+
+      <div class="cal cal--must">
+        <b class="cal-h">한 통을 여러 방으로 보낼 수는 없습니다.</b>
+        <p><code>엄마 아빠 안녕</code>이라고 보내면 두 사람에게 가는 것이 아니라,
+          <b>엄마에게 "아빠 안녕"</b>이 전송됩니다. 첫 낱말만 채팅방 이름이기 때문입니다.
+          게다가 전송에는 성공했으므로 답장도 오지 않아 알아채기 어렵습니다.
+          방마다 따로 보내세요.</p>
+      </div>
+
+      <div class="cal cal--tip">
+        <b class="cal-h">내용이 <code>@</code>로 시작할 때는 <code>@</code>를 두 번 적으세요.</b>
+        <p>카카오톡 단톡방의 <code>@everyone</code>이나 <code>@홍길동</code> 같은 멘션을 보내려면
+          <code>@@everyone</code>처럼 앞에 하나를 더 붙입니다. 하나는 떼어내고 나머지가 그대로 전달됩니다.</p>
+        <p>그냥 <code>@everyone</code>이라고 보내면 대상을 바꾸라는 명령으로 읽혀
+          <code>everyone</code>이라는 채팅방을 찾다가 실패합니다.</p>
       </div>
 
       <div class="cal cal--warn">
@@ -1619,9 +1742,9 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
         압축을 푼 폴더의 <code>KakaoRelay.bat</code>이나 알림 영역 아이콘의
         <b>열기</b> 메뉴도 같은 창을 엽니다.</p>
       <p>이 창에는 <b>상태 점검</b>, <b>설정 편집</b>, <b>기록 폴더</b>, <b>실시간 기록</b>도 함께 있습니다.</p>
-      <p>맨 위 상태 줄에 지금 형편이 한 줄로 나옵니다.
-        <code>카카오톡 연결됨 · 3분째 대기 중 · 고정: 엄마</code>처럼 표시되며,
-        <code>@</code>로 지정해 둔 대상이 있으면 <b>고정:</b> 뒤에 그 채팅방 이름이 붙습니다.
+      <p>맨 위 상태 줄에 지금 상태가 한 줄로 나옵니다.
+        <code>카카오톡 연결됨 · 3분째 대기 중 · 대상: 엄마</code>처럼 표시되며,
+        <code>@</code>로 지정해 둔 대상이 있으면 <b>대상:</b> 뒤에 그 채팅방 이름이 붙습니다.
         카카오톡이 꺼져 있으면 상태가 <b>카카오톡 꺼짐</b>으로 바뀌어, 지금 문자가 와도 못 보낸다는 것을 알려 줍니다.</p>
 
       <div class="tw">
@@ -1754,7 +1877,7 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
                 <b>설정 &gt; 네트워크 및 인터넷 &gt; 속성 &gt; 네트워크 프로필 유형</b>에서 <b>개인</b>을 선택하세요.</td>
             </tr>
             <tr>
-              <th scope="row">허용되지 않은 접속입니다</th>
+              <th scope="row">접속 거부</th>
               <td><b>설정 편집</b>으로 설정 파일을 열고 <code>allowIPs</code>에 중계 휴대폰이 속한 대역을 추가하세요.
                 <code>"192.168.0.*"</code>처럼 끝자리를 <code>*</code>로 적습니다.
                 공유기를 바꿔 대역이 달라진 경우에도 이 값을 직접 고쳐야 합니다.
@@ -1762,7 +1885,8 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
             </tr>
             <tr>
               <th scope="row">등록되지 않은 발신자입니다</th>
-              <td><code>allowFrom</code>에 발신자의 연락처 이름이 등록되어 있는지 확인하세요.
+              <td><code>allowFrom</code>에 문자를 보낸 휴대폰의 <b>전화번호</b>가 등록되어 있는지 확인하세요.
+                (권장하지 않는 알림 방식을 쓴다면 번호가 아니라 <b>연락처 이름</b>입니다.)
                 자세한 내용은 <a href="#s5">05 설정 파일 편집</a>을 참고하세요.</td>
             </tr>
             <tr>
@@ -1789,7 +1913,7 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
             <tr>
               <th scope="row">채팅방을 찾지 못함</th>
               <td>카카오톡에 표시되는 이름과 설정한 이름이 한 글자도 다르지 않은지 확인하세요.
-                중계 휴대폰 브라우저에서 <code>/rooms</code>로 접속하면 현재 열려 있는 채팅방 이름을 볼 수 있습니다.</td>
+                <b>카톡 릴레이</b> 창의 <b>상태 점검</b>을 누르면 지금 열려 있는 채팅방 이름이 함께 표시됩니다.</td>
             </tr>
             <tr>
               <th scope="row">장문이 잘려 뒷부분만 실패</th>
@@ -1830,7 +1954,11 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
   [엄마]        보낼 수 있음
   [개발팀 단톡방] 보낼 수 있음</pre>
         </div>
-        <p>중계 휴대폰 브라우저에서 <code>/rooms</code> 주소로 접속해도 같은 목록을 볼 수 있습니다.</p>
+        <p>이 목록에는 <b>지금 새 창으로 열려 있는</b> 채팅방만 나옵니다.
+          릴레이는 전송이 끝나면 창을 닫으므로 평소에는 비어 있습니다.
+          이름을 확인하려면 카카오톡에서 그 방을 새 창으로 열어 둔 뒤 눌러 보세요.</p>
+        <p>릴레이 PC 의 브라우저에서 아래 주소로도 볼 수 있습니다.
+          채팅방 이름은 곧 사람 이름이므로 다른 기기에서는 열리지 않습니다.</p>
         <div class="codewrap">
 <pre>http://<span data-ip>내 IP 주소</span>:8787/rooms</pre>
         </div>
@@ -1864,6 +1992,37 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
             <tr><th scope="col">상황</th><th scope="col">동작</th></tr>
           </thead>
           <tbody>
+            <tr>
+              <th scope="row">카카오톡으로 온 답장</th>
+              <td><b>문자로 받을 수 없습니다.</b> 이 릴레이는 문자 → 카카오톡 한 방향입니다.
+                상대의 답장은 PC 카카오톡에서 직접 확인해야 합니다.
+                <a href="#s3">03</a>의 <b>결과를 문자로 돌려받기</b>는 전달 성공·실패만 알려 주는 기능입니다.</td>
+            </tr>
+            <tr>
+              <th scope="row">사진 · 동영상 · 파일</th>
+              <td>전달되지 않습니다. 사진을 붙이면 문자가 MMS 로 바뀌는데,
+                <code>SMS 수신</code> 트리거는 MMS 를 감지하지 못해 <b>릴레이에 도착조차 하지 않습니다.</b>
+                아무 답장도 오지 않으므로, 응답이 없으면 사진을 보낸 것은 아닌지 확인하세요.</td>
+            </tr>
+            <tr>
+              <th scope="row">본문에 이모지</th>
+              <td>권하지 않습니다. 이모지를 넣으면 문자가 MMS 로 바뀌어 위와 같은 이유로 도착하지 않습니다.
+                채팅방 이름에 이모지가 있다면 이름 앞부분만 적거나
+                <a href="#s5">05</a>에서 별칭을 등록해 이모지 없이 보내세요.</td>
+            </tr>
+            <tr>
+              <th scope="row">오픈채팅방</th>
+              <td>전달되지 않습니다. 릴레이는 채팅 목록과 친구 목록만 찾습니다.</td>
+            </tr>
+            <tr>
+              <th scope="row">집 밖 · 데이터(LTE)</th>
+              <td>동작하지 않습니다. 중계 휴대폰이 PC와 <b>같은 Wi-Fi</b>에 있어야 합니다.
+                공유기 포트를 여는 방법은 인터넷 전체에 릴레이가 열리므로 권하지 않습니다.</td>
+            </tr>
+            <tr>
+              <th scope="row">한 통을 여러 방으로</th>
+              <td>할 수 없습니다. 방마다 따로 보내세요.</td>
+            </tr>
             <tr>
               <th scope="row">PC 전원 꺼짐 또는 절전</th>
               <td>릴레이가 동작하지 않습니다. <b>설정 &gt; 시스템 &gt; 전원 및 배터리</b>에서 절전 모드 전환을 <b>안 함</b>으로 두세요.</td>
@@ -1918,6 +2077,58 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
         <h2 id="s11h">보안과 개인정보</h2>
       </div>
 
+      <div class="cal cal--tip">
+        <b class="cal-h">이 프로그램이 하지 않는 것</b>
+        <p>카카오톡 대화 내용을 읽지 않습니다. 채팅방을 찾을 때 <b>방 제목</b>만 봅니다.</p>
+        <p>외부 서버로 아무것도 보내지 않습니다. 업데이트 확인이나 사용 통계도 없습니다.</p>
+        <p>관리자 권한은 설치할 때 <b>방화벽 규칙 하나</b>를 만드는 데에만 씁니다.
+          릴레이 자체는 일반 사용자 권한으로 동작합니다.</p>
+      </div>
+
+      <div class="cal cal--warn">
+        <b class="cal-h">같은 공유기에 있는 기기는 문자를 보낸 것처럼 요청할 수 있습니다.</b>
+        <p>릴레이는 접속 IP와 발신 번호를 봅니다. 다만 두 검사의 성격이 다릅니다.
+          접속 IP는 릴레이가 직접 확인하지만, <b>발신 번호는 요청을 보내는 쪽이 적어 넣는 값</b>이라
+          꾸며 낼 수 있습니다.</p>
+        <p>허용 IP는 설치할 때 공유기 대역 전체(<code>192.168.0.*</code> 같은 형태)로 잡힙니다.
+          그래서 같은 공유기에 연결된 기기라면, 발신 번호를 아는 사람이 문자를 보낸 것처럼 요청할 수 있습니다.</p>
+        <p>손님이나 여러 사람이 함께 쓰는 공유기라면 아래 <b>비밀번호 사용하기</b>를 켜 두세요.
+          초기 설정에서는 꺼져 있습니다.</p>
+      </div>
+
+      <div class="cal cal--must">
+        <b class="cal-h">PC 에 남는 것</b>
+        <div class="tw">
+          <table>
+            <thead>
+              <tr><th scope="col">파일</th><th scope="col">들어 있는 것</th></tr>
+            </thead>
+            <tbody>
+              <tr><th scope="row"><code>program\relay.log</code></th>
+                  <td>주고받은 문자 내용(앞 40자)과 발신 번호. 1MB 를 넘으면 <code>relay.log.old</code>로 한 번 밀리고, 그보다 오래된 것은 남지 않습니다</td></tr>
+              <tr><th scope="row"><code>program\config.json</code></th>
+                  <td>전화번호, 비밀번호를 켰다면 그 값</td></tr>
+              <tr><th scope="row"><code>program\pinned.json</code></th>
+                  <td>사람별로 지정해 둔 채팅방 이름</td></tr>
+              <tr><th scope="row"><code>program\fail-shot.png</code></th>
+                  <td>전송에 실패한 순간의 카카오톡 창 아래쪽. <b>마지막 대화 한두 줄이 함께 찍힐 수 있습니다.</b> 지워도 되고, 다음 실패 때 다시 생깁니다</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>자동으로 지워지지 않습니다. 지우는 방법은 <a href="#s13">13 지우기</a>에 있습니다.</p>
+        <p><b>문제를 물어보려고 기록 파일을 남에게 보낼 때는</b> 문자 내용과 전화번호가 함께 간다는 점을 기억하세요.</p>
+      </div>
+
+      <div class="cal cal--tip">
+        <b class="cal-h">허용하지 않은 번호에서 온 문자도 기록에는 남습니다.</b>
+        <p>카카오톡으로 전달하지는 않지만, 왜 거부했는지 알 수 있도록 앞 30자를 기록합니다.
+          중계 휴대폰이 받는 은행 알림이나 인증번호까지 남기지 않으려면
+          <a href="#s3">03 중계 휴대폰 설정</a>의 MacroDroid 트리거에 <b>발신자 조건</b>을 걸어 두세요.</p>
+        <p>휴대폰과 PC 사이는 집 안 공유기 구간이며 암호화하지 않습니다.
+          공용 Wi-Fi 에서는 쓰지 마세요.</p>
+      </div>
+
+
       <p>릴레이는 들어오는 요청을 두 단계로 검증합니다.</p>
       <div class="tw">
         <table>
@@ -1955,6 +2166,95 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
         <p>설치한 폴더를 복사해 전달하지 말고, 이 문서 맨 위의 <b>내려받기</b> 링크를 안내하세요.</p>
       </div>
     </section>
+
+    <!-- ==================== 12 ==================== -->
+    <section id="s12" aria-labelledby="s12h">
+      <div class="s-head">
+        <div class="s-kicker"><span class="s-num">12</span><span class="chip chip--pc"><span class="sr-only">작업 위치: </span>PC</span></div>
+        <h2 id="s12h">새 판으로 올리기</h2>
+      </div>
+
+      <p>이미 쓰고 있는 상태에서 새 판을 받았다면, <b>압축을 푸는 것만으로는 다 반영되지 않습니다.</b>
+        아래 순서를 따라 주세요.</p>
+
+      <ol class="steps" role="list">
+        <li><b>덮어쓰기</b>
+          <p>내려받은 압축을 기존 폴더에 그대로 풉니다. 폴더 구성이 같으므로 파일만 바뀝니다.
+            <code>config.json</code>과 기록은 압축본에 들어 있지 않아 그대로 남습니다.</p>
+        </li>
+        <li><b>설치 프로그램 다시 실행</b>
+          <p>예약 작업 설정이 바뀐 판이 있습니다. 이 변경은 설치를 한 번 더 돌려야 반영됩니다.</p>
+          <p>이미 설치를 마친 상태에서는 조작 창에 <b>[설치하기]</b> 버튼이 나오지 않습니다.
+            <code>program</code> 폴더의 <code>Setup.ps1</code>을
+            <b>마우스 오른쪽 버튼 클릭 &gt; PowerShell로 실행</b>하세요.
+            권한 창이 나오면 <b>[예]</b>를 선택합니다.</p>
+          <p>기존 설정은 덮어쓰지 않고 전화번호도 다시 묻지 않습니다.</p>
+        </li>
+        <li><b>어느 판이 돌고 있는지 확인</b>
+          <p>중계 휴대폰의 브라우저에서 아래 주소를 여세요.</p>
+          <div class="codewrap">
+<pre>http://<span data-ip>내 IP 주소</span>:8787/health</pre>
+          </div>
+          <p>응답에 <code>"version":"1.1"</code>처럼 판이 적혀 있습니다.
+            <b>조작 창 제목과 상태 점검 첫 줄은 파일에 적힌 판을 보여 줄 뿐</b>이므로,
+            덮어쓰기만 하고 다시 시작하지 않았다면 실제와 다를 수 있습니다.</p>
+        </li>
+        <li><b>중계 휴대폰 설정 손보기</b>
+          <p>URL 끝에 <code>&amp;reply=text</code>가 있는지, 제한 시간이 <code>120</code>초인지 확인하세요.
+            <a href="#s3">03 중계 휴대폰 설정</a>을 참고해 <b>SMS 수신</b> 방식으로 바꾸는 것도 권합니다.</p>
+        </li>
+      </ol>
+
+      <div class="cal cal--warn">
+        <b class="cal-h">문자 형식이 바뀐 적이 있습니다.</b>
+        <p>예전에 쓰던 <code>채팅방/내용</code> 형식은 더 이상 쓰지 않습니다.
+          지금은 <b>맨 처음 띄어쓰기</b> 하나로 가릅니다.</p>
+        <div class="codewrap">
+<pre>예전   엄마/오늘 좀 늦어요
+지금   엄마 오늘 좀 늦어요</pre>
+        </div>
+        <p>옛 형식으로 보내면 슬래시까지 포함한 이름의 채팅방을 찾다가 실패합니다.</p>
+      </div>
+    </section>
+
+    <!-- ==================== 13 ==================== -->
+    <section id="s13" aria-labelledby="s13h">
+      <div class="s-head">
+        <div class="s-kicker"><span class="s-num">13</span><span class="chip chip--pc"><span class="sr-only">작업 위치: </span>PC</span></div>
+        <h2 id="s13h">지우기</h2>
+      </div>
+
+      <p>폴더만 지우면 예약 작업 2개와 방화벽 규칙이 컴퓨터에 남습니다.
+        아래 순서대로 하면 깨끗하게 없어집니다.</p>
+
+      <ol class="steps" role="list">
+        <li><b>지우기 프로그램 실행</b>
+          <p><code>program</code> 폴더의 <code>Uninstall.ps1</code>을
+            <b>마우스 오른쪽 버튼 클릭 &gt; PowerShell로 실행</b>하세요.
+            권한 창이 나오면 <b>[예]</b>를 선택합니다.</p>
+          <p>프로그램을 내리고, 예약 작업 2개와 방화벽 규칙, 바탕 화면 바로가기를 지웁니다.
+            기록과 설정을 지울지는 물어봅니다.</p>
+        </li>
+        <li><b>폴더 삭제</b>
+          <p>압축을 풀었던 폴더를 통째로 지우세요.</p>
+        </li>
+        <li><b>중계 휴대폰 정리</b>
+          <p>MacroDroid에서 만들어 둔 매크로를 지우세요. 다른 데 쓰지 않는다면 앱도 함께 지우면 됩니다.</p>
+        </li>
+      </ol>
+
+      <div class="cal cal--must">
+        <b class="cal-h">기록에는 주고받은 문자 내용이 들어 있습니다.</b>
+        <p><code>program\relay.log</code>에는 보낸 문자와 전화번호가,
+          <code>config.json</code>에는 전화번호가, <code>fail-shot.png</code>에는
+          실패한 순간의 카카오톡 화면이 남아 있습니다.
+          지우기 프로그램이 물어볼 때 함께 지우거나, 폴더를 지울 때 확인하세요.</p>
+      </div>
+
+      <p>카카오톡과 Windows 설정은 바뀐 것이 없습니다.
+        설치할 때 껐던 카카오톡 화면잠금은 필요하면 다시 켜세요.</p>
+    </section>
+
 
   </main>
 
