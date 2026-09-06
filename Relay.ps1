@@ -360,7 +360,7 @@ function Parse-Command {
         $i = $body.IndexOf(' ')
         if ($i -lt 1) { return @{ ok=$false; error="형식 오류`n$fmt`n띄어쓰기로 구분" } }
         # -ne 는 대소문자를 무시한다. 비밀번호는 구분해야 하므로 -cne 를 쓴다.
-        if ($body.Substring(0, $i).Trim() -cne $cfg.password) { return @{ ok=$false; error='비밀번호 틀림' + [char]10 + '맨 앞 단어이 비밀번호' } }
+        if ($body.Substring(0, $i).Trim() -cne $cfg.password) { return @{ ok=$false; error='비밀번호 틀림' + [char]10 + '맨 앞 단어가 비밀번호' } }
         $body = $body.Substring($i + 1).Trim()
         if (-not $body) { return @{ ok=$false; error="보낼 내용 없음`n비밀번호만 왔음" } }
     }
@@ -393,7 +393,7 @@ function Parse-Command {
 
     <#
       대상이 고정돼 있거나 defaultRoom 이 정해져 있으면 방 이름을 적지 않는다.
-      본문 전체가 내용이다. 첫 단어을 방 이름으로 떼어내면 문장의 첫 단어가 사라진다.
+      본문 전체가 내용이다. 첫 단어를 방 이름으로 떼어내면 문장의 첫 단어가 사라진다.
     #>
     $pinned = Get-Pin $script:parseFrom
     if ($pinned) {
@@ -759,8 +759,8 @@ function Handle-Sms {
     if ($cmd.pinAction -eq 'clear') {
         Clear-Pin $from
         Write-Log "대상 해제 (이전 [$before])" 'INFO'
-        $say = if ($before) { '대상 해제' + $nl + (Format-RoomForSms $before) + " $arrow 해제" + $nl + '이제 첫 단어이 채팅방' }
-               else         { '지정된 대상 없음' + $nl + '첫 단어이 채팅방 이름' }
+        $say = if ($before) { '대상 해제' + $nl + (Format-RoomForSms $before) + " $arrow 해제" + $nl + '이제 첫 단어가 채팅방' }
+               else         { '지정된 대상 없음' + $nl + '첫 단어가 채팅방 이름' }
         return @{ ok = $true; error = $null; pinned = $null; retryable = $false; reply = $say }
     }
     if ($cmd.pinAction -eq 'set') {
