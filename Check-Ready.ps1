@@ -10,7 +10,7 @@ try {
 } catch { }
 
 Write-Host ''
-Write-Host '  카톡 릴레이 - 점검' -ForegroundColor White
+Write-Host '  카톡 릴레이 - 상태 점검' -ForegroundColor White
 Write-Host '  ────────────────────────────────────────────────' -ForegroundColor DarkGray
 Write-Host ''
 
@@ -57,9 +57,9 @@ function Chk([string]$name, [bool]$ok, [string]$detail, [string]$fix = '') {
 
 # --- PC / 카톡 ---
 $kk = @(Get-KakaoProcessIds)
-Chk '카카오톡 실행' ($kk.Count -gt 0) $(if($kk.Count){"PID $($kk -join ',')"}else{'실행 안 됨'}) '카카오톡을 실행하고 로그인하세요'
+Chk '카카오톡 실행' ($kk.Count -gt 0) $(if($kk.Count){'실행 중'}else{'실행 안 됨'}) '카카오톡을 실행하고 로그인하세요'
 $main = Get-KakaoMainWindow
-Chk '카카오톡 메인창 인식' ($null -ne $main) $(if($main){"0x{0:X}" -f [int64]$main.Hwnd}else{'못 찾음'}) '카카오톡 로그인 및 화면잠금 해제'
+Chk '카카오톡 메인창 인식' ($null -ne $main) $(if($main){'창 확인됨'}else{'못 찾음'}) '카카오톡 로그인 및 화면잠금 해제'
 
 # --- 설정 ---
 # 비밀번호는 requirePassword 가 켜져 있을 때만 의미가 있다.
@@ -75,11 +75,12 @@ if ($needPw) {
 
 $allow = @($cfg.allowFrom | Where-Object { $_ -and $_ -ne '010-0000-0000' })
 Chk '허용 발신번호' ($allow.Count -gt 0) `
-    $(if($allow.Count){$allow -join ', '}else{'미설정(기본 placeholder)'}) `
-    '[카톡 릴레이] > [설정 편집] 에서 allowFrom 에 발신 번호 입력'
+    $(if($allow.Count){$allow -join ', '}else{'예시 번호 그대로'}) `
+    '[카톡 릴레이] > [설정 편집]에서 allowFrom 에 문자를 보낼 번호를 넣으세요'
 
-Chk 'dryRun 해제' (-not $cfg.dryRun) $(if($cfg.dryRun){'true (실제 전송 안 함)'}else{'false'}) `
-    '[카톡 릴레이] > [설정 편집] 에서 dryRun 을 false 로'
+# 조작 창에 [시험 모드 해제] 버튼이 있다. 메모장으로 JSON 을 고치게 하면 안 된다.
+Chk '시험 모드' (-not $cfg.dryRun) $(if($cfg.dryRun){'켜짐 - 카카오톡으로 실제 전송하지 않음'}else{'꺼짐'}) `
+    '[카톡 릴레이] 창에서 [시험 모드 해제]를 누르세요'
 
 $aliasCount = @($cfg.aliases.PSObject.Properties).Count
 # 별칭이 없어도 전체 채팅방 이름으로 보내면 되므로 실패로 취급하지 않는다
@@ -112,7 +113,7 @@ $profName = if ($prof) { ($prof | ForEach-Object { "$($_.InterfaceAlias)=$($_.Ne
 Chk '네트워크 프로필' ($priv.Count -gt 0) $profName '설정 > 네트워크 및 인터넷 > 속성 > 네트워크 프로필 유형을 [개인] 으로 변경'
 
 $listening = Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue | Where-Object { $_.LocalPort -eq $cfg.port }
-Chk '문자 전달 서버' ($null -ne $listening) $(if($listening){"포트 $($cfg.port) 리스닝 중"}else{'안 돌고 있음'}) 'program 폴더의 Setup.ps1 을 마우스 오른쪽 > PowerShell로 실행'
+Chk '카톡 릴레이 실행' ($null -ne $listening) $(if($listening){'동작 중'}else{'안 돌고 있음'}) '[카톡 릴레이] 창에서 [지금 켜기]를 누르세요'
 
 <#
   일부러 꺼 둔 상태인지 고장인지 구분해서 보여 준다.
@@ -165,5 +166,5 @@ if (-not $openRooms) {
 # --- 마무리 ---
 Write-Host ''
 if ($todo -eq 0) { Write-Host '모든 항목 통과. 문자만 들어오면 동작합니다.' -ForegroundColor Green }
-else { Write-Host "남은 항목: $todo 개" -ForegroundColor Yellow }
+else { Write-Host "할 일 $todo 개 - 위의 -> 표시를 따라 하세요." -ForegroundColor Yellow }
 Write-Host ''

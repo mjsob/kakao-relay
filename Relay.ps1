@@ -73,6 +73,19 @@ $LogFile = Join-Path $PSScriptRoot 'relay.log'
 Remove-Item (Join-Path $PSScriptRoot 'stopped.marker') -Force -ErrorAction SilentlyContinue
 
 $PauseFile = Join-Path $PSScriptRoot 'paused.marker'
+<#
+  일하는 중임을 알리는 표시.
+
+  릴레이는 요청을 하나씩 처리한다. 카카오톡이 로그인 화면이거나 준비 중이면
+  한 통 처리에 90초까지 걸리는데, 그동안 /health 에 답하지 못한다.
+  감시자는 75초 무응답이면 좀비로 보고 죽이므로, 멀쩡히 일하는 릴레이가
+  강제 종료되고 그 문자는 사라진다. 죽는 순간 카톡 창 정리도 못 해
+  열린 채팅방이 그대로 남는다.
+
+  그래서 문자를 처리하는 동안에는 이 파일의 시각을 갱신해 둔다.
+  감시자는 이 시각이 최근이면 죽이지 않는다.
+#>
+$BusyFile  = Join-Path $PSScriptRoot 'busy.marker'
 function Test-Paused { Test-Path $PauseFile }
 
 <#
@@ -94,8 +107,17 @@ function Invoke-LogRoll {
     } catch { }
 }
 
+<#
+  기록 한 줄은 반드시 한 줄이어야 한다.
+
+  문자 본문이 그대로 들어오는 자리가 여럿인데, 본문에 줄바꿈이 있으면
+  기록이 여러 줄로 쪼개진다. 그러면 Show-Log 의 색칠이 첫 줄에만 걸려
+  나머지가 시간도 등급도 없이 흘러나오고, 본문에 가짜 기록 줄을 적어 넣어
+  있지도 않은 '전송 성공' 을 남길 수도 있다.
+#>
 function Write-Log {
     param([string]$Msg, [string]$Level = 'INFO')
+    $Msg  = ($Msg -replace "`r", '') -replace "`n", ' / '
     $line = "[{0}] [{1}] {2}" -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'), $Level, $Msg
     if (-not $script:noConsole) {
         $color = switch ($Level) { 'ERR' {'Red'} 'WARN' {'Yellow'} 'SEND' {'Green'} default {'Gray'} }
@@ -132,6 +154,21 @@ function Normalize-Name {
     if (-not $s) { return '' }
     $t = $s -replace '[\u200B-\u200F\u2066-\u2069\uFEFF]', ''
     return ($t -replace '\s+', '').Trim()
+}
+
+<#
+  발신자를 구분하는 열쇠.
+
+  Normalize-Phone 은 숫자만 남기므로 이름으로 오는 발신자는 전부 빈 문자열이 된다.
+  알림 트리거는 번호를 못 보내고 이름만 보내므로, 그대로 쓰면 서로 다른 사람이
+  같은 열쇠를 갖게 되어 고정 대상과 중복 차단이 섞인다.
+  번호가 있으면 번호를, 없으면 이름을 쓴다.
+#>
+function Get-SenderKey {
+    param([string]$from)
+    $d = Normalize-Phone $from
+    if ($d) { return $d }
+    return 'name:' + (Normalize-Name $from)
 }
 
 <#
@@ -191,12 +228,18 @@ function Test-AllowedIP {
     return $false
 }
 
+<#
+  별칭을 실제 채팅방 이름으로 바꾼다.
+  별칭 값이 비어 있으면(설정 오타) 원래 이름을 그대로 쓴다.
+  null 을 돌려주면 뒤쪽 Mandatory 매개변수 바인딩에서 종료 오류가 난다.
+#>
 function Resolve-Room {
     param([string]$name)
     if (-not $name) { return $null }
     $name = $name.Trim()
     if ($cfg.aliases -and $cfg.aliases.PSObject.Properties.Name -contains $name) {
-        return $cfg.aliases.$name
+        $v = [string]$cfg.aliases.$name
+        if ($v) { return $v }
     }
     return $name
 }
@@ -241,6 +284,49 @@ function Remove-MmsSubjectLine {
 
   대신 이름에 띄어쓰기가 있는 방은 별칭을 등록해야 한다. 그건 설명서에서 크게 알린다.
 #>
+<#
+  대상 고정.
+
+  '@엄마' 처럼 보내면 그 뒤로는 방 이름 없이 내용만 보내도 계속 그 방으로 간다.
+  매번 방 이름을 앞에 치는 것이 번거롭기 때문이다.
+
+  발신자마다 따로 기억한다. 같은 릴레이를 여러 사람이 쓸 때 서로 대상이 섞이면 안 된다.
+  파일에 적어 두므로 릴레이를 다시 켜도 유지된다.
+#>
+$PinFile = Join-Path $PSScriptRoot 'pinned.json'
+$script:pins = @{}
+try {
+    if (Test-Path $PinFile) {
+        $j = Get-Content $PinFile -Raw -Encoding UTF8 | ConvertFrom-Json
+        foreach ($k in $j.PSObject.Properties.Name) { $script:pins[$k] = [string]$j.$k }
+    }
+} catch {
+    # 조용히 넘기면 고정이 사라진 것을 아무도 모른다
+    $script:pins = @{}
+    Write-Log "고정 대상 파일을 읽지 못해 초기화함: $($_.Exception.Message)" 'WARN'
+}
+
+<#
+  고정 대상을 파일에 남긴다.
+
+  바로 덮어쓰면 쓰는 도중에 프로세스가 죽었을 때 잘린 JSON 이 남는다.
+  다음 시작 때 읽기가 실패하고, 고정이 조용히 전부 사라진다.
+  임시 파일에 다 쓴 뒤 이름을 바꿔치기하면 그런 중간 상태가 생기지 않는다.
+#>
+function Save-Pins {
+    try {
+        $o = [pscustomobject]@{}
+        foreach ($k in $script:pins.Keys) { $o | Add-Member -NotePropertyName $k -NotePropertyValue $script:pins[$k] }
+        $tmp = "$PinFile.tmp"
+        $o | ConvertTo-Json -Depth 3 | Set-Content $tmp -Encoding UTF8
+        Move-Item $tmp $PinFile -Force
+    } catch { Write-Log "고정 대상 저장 실패(무시): $($_.Exception.Message)" 'WARN' }
+}
+
+function Get-Pin  { param([string]$from) $k = Get-SenderKey $from; if ($script:pins.ContainsKey($k)) { $script:pins[$k] } else { $null } }
+function Set-Pin  { param([string]$from,[string]$room) $script:pins[(Get-SenderKey $from)] = $room; Save-Pins }
+function Clear-Pin{ param([string]$from) $k = Get-SenderKey $from; if ($script:pins.ContainsKey($k)) { $script:pins.Remove($k); Save-Pins } }
+
 function Split-RoomAndText {
     param([string]$s)
     $s = $s.Trim()
@@ -250,38 +336,59 @@ function Split-RoomAndText {
 }
 
 function Parse-Command {
-    param([string]$body)
+    param([string]$body, [string]$from)
+    $script:parseFrom = $from
     $body = (Remove-MmsSubjectLine $body).Trim()
-    if (-not $body) { return @{ ok=$false; error='문자 내용이 비어 있습니다.' } }
+    if (-not $body) { return @{ ok=$false; error="내용 없음`n문자가 비어 있음" } }
 
     $needPw = if ($cfg.PSObject.Properties.Name -contains 'requirePassword') { [bool]$cfg.requirePassword } else { $true }
     $fmt    = if ($needPw) { '비밀번호 채팅방 내용' } else { '채팅방 내용' }
 
     if ($needPw) {
         $i = $body.IndexOf(' ')
-        if ($i -lt 1) { return @{ ok=$false; error="형식이 맞지 않습니다. '$fmt' 형식으로 보내 주세요." } }
-        if ($body.Substring(0, $i).Trim() -ne $cfg.password) { return @{ ok=$false; error='비밀번호가 맞지 않습니다.' } }
+        if ($i -lt 1) { return @{ ok=$false; error="형식 오류`n$fmt`n띄어쓰기로 구분" } }
+        # -ne 는 대소문자를 무시한다. 비밀번호는 구분해야 하므로 -cne 를 쓴다.
+        if ($body.Substring(0, $i).Trim() -cne $cfg.password) { return @{ ok=$false; error='비밀번호 틀림' + [char]10 + '맨 앞 낱말이 비밀번호' } }
         $body = $body.Substring($i + 1).Trim()
-        if (-not $body) { return @{ ok=$false; error='보낼 내용이 없습니다.' } }
+        if (-not $body) { return @{ ok=$false; error="보낼 내용 없음`n비밀번호만 왔음" } }
     }
 
     <#
-      defaultRoom 을 정해 두면 방 이름을 적지 않는다. 본문 전체가 내용이다.
-      첫 낱말을 방 이름으로 떼어내 버리면 문장의 첫 단어가 사라지기 때문이다.
+      '@' 로 시작하면 대상을 바꾸는 명령이다.
+        @엄마        대상만 고정하고 아무것도 보내지 않는다
+        @엄마 안녕    고정한 뒤 그 내용을 바로 보낸다
+        @            고정을 푼다
     #>
-    if ($cfg.defaultRoom) {
+    if ($body.StartsWith('@')) {
+        $rest = $body.Substring(1).Trim()
+        if (-not $rest) { return @{ ok=$true; pinAction='clear' } }
+        $sp   = $rest.IndexOf(' ')
+        $name = if ($sp -lt 1) { $rest } else { $rest.Substring(0, $sp) }
+        $tail = if ($sp -lt 1) { '' }   else { $rest.Substring($sp + 1).Trim() }
+        return @{ ok=$true; pinAction='set'; room=(Resolve-Room $name); text=$tail }
+    }
+
+    <#
+      대상이 고정돼 있거나 defaultRoom 이 정해져 있으면 방 이름을 적지 않는다.
+      본문 전체가 내용이다. 첫 낱말을 방 이름으로 떼어내면 문장의 첫 단어가 사라진다.
+    #>
+    $pinned = Get-Pin $script:parseFrom
+    if ($pinned) {
+        $room = $pinned
+        $text = $body
+    } elseif ($cfg.defaultRoom) {
         $room = Resolve-Room $cfg.defaultRoom
         $text = $body
     } else {
         $r = Split-RoomAndText $body
         if (-not $r.room) {
-            return @{ ok=$false; error="채팅방 이름이 없습니다. '$fmt' 형식으로, 채팅방 이름 뒤에 띄어쓰기를 하고 내용을 적어 주세요." }
+            return @{ ok=$false; error="채팅방 이름 없음`n채팅방 내용  또는  @채팅방`n띄어쓰기로 구분" }
         }
         $room = $r.room
         $text = $r.text
     }
 
-    if ([string]::IsNullOrWhiteSpace($text)) { return @{ ok=$false; error='보낼 내용이 없습니다.' } }
+    if ([string]::IsNullOrWhiteSpace($text)) { return @{ ok=$false; error="보낼 내용 없음`n채팅방 이름만 왔음`n뒤에 내용을 붙여 보내기" } }
     return @{ ok=$true; room=$room; text=$text.Trim() }
 }
 
@@ -321,7 +428,7 @@ function Remove-ExpiredDedupe {
 function Get-DedupeKey {
     param([string]$From, [string]$Text)
     $flat = ($Text -replace '\s+', '')
-    return (Normalize-Phone $From) + '|' + $flat
+    return (Get-SenderKey $From) + '|' + $flat
 }
 
 function Test-AlreadySent {
@@ -382,6 +489,15 @@ function Read-HttpRequest {
         $stream.Flush()
     }
 
+    <#
+      본문 크기에 상한을 둔다.
+      Content-Length 를 그대로 믿으면 한 연결이 메모리를 계속 먹으며 릴레이를 붙잡는다.
+      수락 루프가 한 줄이라 그동안 진짜 문자는 하나도 못 받는다.
+      문자는 아무리 길어도 몇 KB 다.
+    #>
+    $maxBody = 64KB
+    if ($contentLength -gt $maxBody) { $contentLength = $maxBody }
+
     $bodyBytes = New-Object System.Collections.Generic.List[byte]
     $already = $all.Length - $headerEnd
     if ($already -gt 0) { $bodyBytes.AddRange([byte[]]($all[$headerEnd..($all.Length-1)])) }
@@ -397,8 +513,64 @@ function Read-HttpRequest {
     }
 }
 
+<#
+  응답을 평문으로도 돌려줄 수 있게 한다.
+
+  중계 휴대폰이 답장 문자를 보내려면 응답을 그대로 문자 본문에 넣을 수 있어야 한다.
+  JSON 을 그대로 넣으면 중괄호가 잔뜩 붙은 문자가 가므로, 주소에 reply=text 를 붙이면
+  사람이 읽을 한 문장만 돌려준다. 할 말이 없으면 빈 응답이라 문자를 보내지 않게 된다.
+#>
+# 답장 문자 앞에 붙는 표식. 중계 휴대폰이 릴레이의 답인지 가리는 데 쓴다.
+$Script:ReplyTag = '[카톡]'
+
+<#
+  답장 문자를 보낼지 여부. 설정의 smsReply 로 끌 수 있다(기본 켜짐).
+
+  답장 한 통마다 문자 요금이 든다. 요금이 부담이면 여기서 끈다.
+  끄면 릴레이는 언제나 '[카톡] OK' 만 돌려주므로 중계 휴대폰이 문자를 보내지 않는다.
+  대신 대상이 무엇으로 지정됐는지, 전달에 실패했는지를 문자로는 알 수 없게 된다.
+#>
+$Script:SmsReplyOn = if ($cfg.PSObject.Properties.Name -contains 'smsReply') { [bool]$cfg.smsReply } else { $true }
+
+<#
+  답장 문자에 넣을 채팅방 이름을 줄인다.
+
+  단문 한 통은 90바이트(한글 45자)다. 넘으면 조용히 장문 요금이 붙는다.
+  카카오톡이 돌려주는 실제 방 이름은 '2026 신입 환영회 준비방' 처럼 길 수 있고,
+  대상을 바꿀 때는 이름이 두 개 들어가므로 금방 한도를 넘는다.
+#>
+function Format-RoomForSms {
+    param([string]$room)
+    if (-not $room) { return '' }
+    if ($room.Length -le 12) { return $room }
+    return $room.Substring(0, 12) + '…'
+}
+
 function Send-HttpResponse {
-    param([System.Net.Sockets.NetworkStream]$stream, [int]$Status = 200, [hashtable]$Payload)
+    param([System.Net.Sockets.NetworkStream]$stream, [int]$Status = 200, [hashtable]$Payload, [switch]$PlainText)
+    if ($PlainText) {
+        <#
+          알려줄 말이 없을 때도 OK 한 마디는 돌려준다.
+          그리고 모든 답장 앞에 표식을 붙인다.
+
+          PC 가 꺼져 있거나 Wi-Fi 가 끊기면 중계 휴대폰의 HTTP 요청이 실패하는데,
+          그때 MacroDroid 는 응답 변수를 비워 두는 것이 아니라
+          'java.net.SocketException ...' 같은 제 예외 메시지로 덮어쓴다.
+          그대로 두면 그 문장이 문자로 나간다.
+
+          표식이 있으면 중계 휴대폰이 '릴레이가 준 답' 과 '릴레이에 닿지 못함' 을
+          확실히 가를 수 있다. 표식이 없는 값은 무조건 닿지 못한 것이다.
+        #>
+        $body = if ($Script:SmsReplyOn) { [string]$Payload['reply'] } else { '' }
+        if (-not $body) { $body = 'OK' }
+        $body = $Script:ReplyTag + ' ' + $body
+        $bytes = [Text.Encoding]::UTF8.GetBytes($body)
+        $text  = switch ($Status) { 200 { 'OK' } 400 { 'Bad Request' } 403 { 'Forbidden' } 404 { 'Not Found' } 503 { 'Service Unavailable' } default { 'OK' } }
+        $head  = "HTTP/1.1 $Status $text`r`nContent-Type: text/plain; charset=utf-8`r`nContent-Length: $($bytes.Length)`r`nConnection: close`r`n`r`n"
+        $hb    = [Text.Encoding]::ASCII.GetBytes($head)
+        $stream.Write($hb, 0, $hb.Length); $stream.Write($bytes, 0, $bytes.Length); $stream.Flush()
+        return
+    }
     $json  = ($Payload | ConvertTo-Json -Compress -Depth 5)
     $bytes = [Text.Encoding]::UTF8.GetBytes($json)
     $text  = switch ($Status) { 200 { 'OK' } 400 { 'Bad Request' } 403 { 'Forbidden' } 404 { 'Not Found' } 503 { 'Service Unavailable' } default { 'Error' } }
@@ -473,12 +645,31 @@ function Extract-SmsFields {
 function Handle-Sms {
     param([string]$from, [string]$text)
 
+    <#
+      릴레이가 보낸 답장이 되돌아오면 무시한다.
+
+      답장 문자가 어떤 경로로든 다시 릴레이로 들어오면 그건 평범한 문자로 처리된다.
+      대상이 고정돼 있으면 답장 내용이 통째로 상대방 카톡으로 나가고,
+      고정이 없으면 '[카톡]' 이 방 이름이 되어 또 실패 답장이 나간다.
+      양쪽 폰에 같은 매크로가 들어가 있으면 둘이 끝없이 주고받는다.
+
+      중복 차단은 이걸 못 막는다. 성공한 전송만 기록하기 때문이다.
+      표식은 이미 붙여 보내고 있으니 들어올 때 그것만 보면 된다.
+    #>
+    if ($text -and $text.TrimStart().StartsWith($Script:ReplyTag)) {
+        Write-Log "무시: 릴레이가 보낸 답장이 되돌아옴" 'WARN'
+        return @{ ok = $true; error = $null; echo = $true; retryable = $false; silent = $true }
+    }
+
     # retryable=$false 인 응답은 HTTP 200 으로 돌려준다.
     # 포워더 앱이 200 이 아니면 재시도하는데, 비밀번호 오류처럼 다시 보내도 소용없는 건
     # 재시도시켜봐야 로그만 더러워지기 때문이다.
     if (-not (Test-AllowedSender $from)) {
         Write-Log "거부: 허용되지 않은 발신번호 '$from'  (본문: '$text')" 'WARN'
-        return @{ ok = $false; error = '등록되지 않은 발신자입니다. PC 설정의 allowFrom 을 확인하세요.'; retryable = $false }
+        # silent: 답장 문자를 보내지 않는다.
+        # 모르는 번호에서 온 문자에 답장하면 엉뚱한 사람에게 문자가 가고 요금도 나간다.
+        return @{ ok = $false; retryable = $false; silent = $true
+                  error = '등록되지 않은 발신자입니다. PC 설정의 allowFrom 을 확인하세요.' }
     }
 
     $dedupeKey = Get-DedupeKey -From $from -Text $text
@@ -488,10 +679,75 @@ function Handle-Sms {
     }
 
     $joinMs = if ($cfg.PSObject.Properties.Name -contains 'joinWindowMs') { [int]$cfg.joinWindowMs } else { 0 }
-    $cmd = Parse-Command $text
+    $cmd = Parse-Command $text -From $from
+
+    <#
+      대상 고정 명령은 보내는 것이 아니라 설정을 바꾸는 것이다.
+      조각 이어붙이기나 중복 차단보다 먼저 처리한다.
+    #>
+    <#
+      답장 문구는 무엇이 달라졌는지에 따라 다르게 적는다.
+      '지정했다' 와 '바꿨다' 가 같은 문장이면, 대상이 바뀐 것을 알아차리지 못한다.
+      방 이름 뒤에 조사를 붙이면 받침에 따라 달라지므로 콜론으로 적는다.
+    #>
+    $before = Get-Pin $from
+    $nl     = [char]10
+    $arrow  = [char]0x2192
+
+    if ($cmd.pinAction -eq 'clear') {
+        Clear-Pin $from
+        Write-Log "대상 고정 해제 (이전 [$before])" 'INFO'
+        $say = if ($before) { '대상 해제' + $nl + (Format-RoomForSms $before) + " $arrow 해제" + $nl + '이제 첫 낱말이 방 이름' }
+               else         { '지정된 대상 없음' + $nl + '첫 낱말이 방 이름' }
+        return @{ ok = $true; error = $null; pinned = $null; retryable = $false; reply = $say }
+    }
+    if ($cmd.pinAction -eq 'set') {
+        <#
+          없는 방을 고정해 버리면 그 뒤로 보내는 문자가 전부 실패한다.
+          그래서 카카오톡에서 실제로 찾은 뒤에만 고정한다.
+          내용이 함께 온 경우에는 그 전송 자체가 확인이 되므로 따로 확인하지 않는다.
+        #>
+        $onlyPin = [string]::IsNullOrWhiteSpace($cmd.text)
+        $real    = $cmd.room
+        $sendRes = $null
+
+        if ($onlyPin) {
+            $chk = Test-KakaoRoom $cmd.room
+            if (-not $chk.ok) { $real = $null } else { $real = $chk.room }
+        } else {
+            $sendRes = Invoke-Send -Room $cmd.room -Text $cmd.text.Trim() -DedupeKey $dedupeKey
+            if (-not $sendRes.ok) { $real = $null } elseif ($sendRes.room) { $real = $sendRes.room }
+        }
+
+        if (-not $real) {
+            $why = if ($onlyPin) { $chk.error } else { $sendRes.error }
+            $ret = if ($onlyPin) { $chk.retryable } else { [bool]$sendRes.retryable }
+            # 방이 없어서 실패한 것인지, 카카오톡이 아직 준비되지 않아 실패한 것인지 가려서 알린다
+            $missing = if ($onlyPin) { [bool]$chk.missing } else { -not [bool]$sendRes.retryable }
+            Write-Log "대상 고정 안 함 - [$($cmd.room)] 확인 실패: $why" 'WARN'
+            $say = if ($missing) {
+                       $keep = if ($before) { '대상 그대로 ' + (Format-RoomForSms $before) } else { '지정된 대상 없음' }
+                       '대상 변경 실패' + $nl + (Format-RoomForSms $cmd.room) + " $arrow 채팅방 없음" + $nl + $keep
+                   } else {
+                       '대상 변경 실패' + $nl + '카카오톡 준비 안 됨' + $nl + '잠시 후 다시 보내기'
+                   }
+            return @{ ok = $false; error = $why; pinned = $before; retryable = $ret; reply = $say }
+        }
+
+        Set-Pin $from $real
+        Write-Log ("대상 지정 -> [{0}] ({1})" -f $real, $(if ($before) { "이전 [$before]" } else { '처음 지정' })) 'INFO'
+        $rs = Format-RoomForSms $real
+        $say = if (-not $before)          { '대상 지정' + $nl + $rs + $nl + '풀려면 @ 한 글자' }
+               elseif ($before -eq $real) { '대상 그대로' + $nl + $rs }
+               else                       { '대상 변경' + $nl + (Format-RoomForSms $before) + " $arrow $rs" }
+
+        if ($onlyPin) { return @{ ok = $true; error = $null; pinned = $real; retryable = $false; reply = $say } }
+        $sendRes['reply'] = if ($sendRes.ok) { $say } else { $say + $nl + '문자는 못 보냄' }
+        return $sendRes
+    }
 
     if ($joinMs -gt 0) {
-        $pk = Normalize-Phone $from
+        $pk = Get-SenderKey $from
         if ($cmd.ok) {
             # 새 메시지의 시작. 앞서 붙들고 있던 게 있으면 먼저 내보낸다.
             if ($script:pending.ContainsKey($pk)) { Send-Pending $pk }
@@ -510,11 +766,27 @@ function Handle-Sms {
     }
 
     if (-not $cmd.ok) {
-        Write-Log "거부: $($cmd.error)  (원문: '$text')" 'WARN'
-        return @{ ok = $false; error = $cmd.error; retryable = $false }
+        $peek = if ($text.Length -gt 30) { $text.Substring(0,30) + '…' } else { $text }
+        Write-Log "거부: $($cmd.error)  (원문: '$peek')" 'WARN'
+        return @{ ok = $false; error = $cmd.error; retryable = $false; reply = $cmd.error }
     }
 
-    return Invoke-Send -Room $cmd.room -Text $cmd.text -DedupeKey $dedupeKey
+    $r = Invoke-Send -Room $cmd.room -Text $cmd.text -DedupeKey $dedupeKey
+    <#
+      이름이 정확히 맞지 않고 앞부분만 맞아 열린 경우에는 어디로 갔는지 알려 준다.
+      '엄마' 로 보냈는데 '엄마들 모임' 으로 갈 수 있는데, 성공하면 답장이 없어서
+      지금은 끝내 모른 채 지나간다.
+    #>
+    if ($r.ok -and $r.approx -and $r.room -and ($r.room -ne $cmd.room)) {
+        $r['reply'] = '보냄' + $nl + (Format-RoomForSms $cmd.room) + " $arrow " + (Format-RoomForSms $r.room) + $nl + '이름이 정확하지 않아 비슷한 방으로'
+    }
+    if (-not $r.ok) {
+        # 문자로 나가는 답은 짧게 줄인다. 자세한 사유는 기록에 남는다.
+        # retryable 이 아니면 방을 못 찾은 것이다(Invoke-Send 참고).
+        $r['reply'] = if ($r.retryable) { '전송 실패' + $nl + '카카오톡 준비 안 됨' + $nl + '잠시 후 다시 보내기' }
+                      else                { '전송 실패' + $nl + (Format-RoomForSms $cmd.room) + " $arrow 채팅방 없음" }
+    }
+    return $r
 }
 
 # 붙들고 있던 조각을 합쳐 내보낸다
@@ -579,6 +851,49 @@ function Flush-Pending {
     }
 }
 
+<#
+  채팅방이 실제로 있는지 확인한다.
+
+  '@엄마' 로 대상을 지정할 때, 있지도 않은 이름이 그대로 고정되면
+  그 뒤로 보내는 문자가 전부 실패한다. 그런데 정작 실패는 다음 문자를 보낸
+  다음에야 알게 된다. 고정하기 전에 한 번 열어 보고 확인한다.
+
+  보내지 않고 열어 보기만 하는 것은 시험 모드(dryRun)와 같은 동작이라
+  같은 경로를 그대로 쓴다. 찾으면 카카오톡에 있는 실제 방 이름을 돌려주므로,
+  이름 일부만 적었어도 정확한 이름으로 고정할 수 있다.
+#>
+function Test-KakaoRoom {
+    param([Parameter(Mandatory)][string]$Room)
+
+    $offsets  = if ($cfg.PSObject.Properties.Name -contains 'rowOffsets' -and $cfg.rowOffsets) { [int[]]$cfg.rowOffsets } else { @(30,62,92,122,152,182) }
+    $auto     = if ($cfg.PSObject.Properties.Name -contains 'autoOpen') { [bool]$cfg.autoOpen } else { $false }
+    $keep     = if ($cfg.PSObject.Properties.Name -contains 'closeAfterSend') { -not [bool]$cfg.closeAfterSend } else { $false }
+    $hideMain = if ($cfg.PSObject.Properties.Name -contains 'hideMainAfterSend') { [bool]$cfg.hideMainAfterSend } else { $false }
+
+    Write-Log "대상 확인 -> [$Room]" 'INFO'
+    $res = Send-KakaoMessage -Room $Room -Text '확인' -Mode $cfg.sendMode -DryRun `
+             -AutoOpen:$auto -RowOffsets $offsets -KeepOpen:$keep -HideMain:$hideMain
+
+    <#
+      메인창 안에서 열린 경우에는 어느 방이 열렸는지 확인할 수 없다.
+      그 상태의 방 제목은 '카카오톡'(메인창 제목)이라, 그대로 고정하면
+      사용자는 '엄마로 지정됐다' 고 믿는데 실제로는 검색 결과 첫 줄로 계속 나간다.
+      확인이 안 된 결과는 고정하지 않는다.
+    #>
+    if ($res.ok -and $res.unverified) {
+        return @{ ok = $false; room = $null; missing = $false; retryable = $true
+                  error = '채팅방을 새 창으로 열도록 설정해야 대상을 확인할 수 있습니다 (카카오톡 설정 > 채팅).' }
+    }
+    if ($res.ok) { return @{ ok = $true; room = $res.room; error = $null; retryable = $false; missing = $false } }
+    <#
+      '방이 없다' 와 '카카오톡이 아직 준비되지 않았다' 는 전혀 다른 상황이다.
+      앞은 이름을 고쳐야 하고, 뒤는 잠시 뒤 다시 보내면 된다.
+      섞어서 '채팅방 없음' 이라고 알리면 멀쩡한 이름을 의심하게 된다.
+    #>
+    return @{ ok = $false; room = $null; error = $res.error
+              missing = [bool]$res.roomNotFound; retryable = (-not $res.roomNotFound) }
+}
+
 function Invoke-Send {
     param([string]$Room, [string]$Text, [string]$DedupeKey)
 
@@ -640,6 +955,7 @@ function Invoke-Send {
     # 전송 자체가 실패한 것은 일시적일 수 있으므로(카톡 잠금 등) 앱이 재시도하도록 둔다.
     return @{ ok = [bool]$res.ok; room = $res.room; dryRun = [bool]$res.dryRun
               openMode = $res.openMode; rowOffset = $res.rowOffset; error = $res.error
+              approx = [bool]$res.approx; unverified = [bool]$res.unverified
               retryable = ((-not $res.ok) -and (-not $res.roomNotFound)) }
 }
 
@@ -905,6 +1221,8 @@ try {
         if (-not $client) { continue }
         $peer = try { $client.Client.RemoteEndPoint.ToString() } catch {"?" }
         try {
+            # 요청을 읽다가 예외가 나도 응답 형식을 정할 수 있어야 한다
+            $plain = $false
             $req = Read-HttpRequest -client $client
             if (-not $req) {
                 <#
@@ -920,10 +1238,19 @@ try {
             }
 
             $path = ($req.Url -split '\?')[0]
+            <#
+              주소에 reply=text 를 붙이면 사람이 읽을 한 문장만 돌려준다.
+              중계 휴대폰이 이 응답을 그대로 보낸 사람에게 문자로 되돌려 준다.
+              거부나 오류로 끝나는 길에서도 같은 형식으로 답해야 하므로 여기서 미리 구한다.
+              표식 없는 응답은 '릴레이에 닿지 못했다' 는 뜻으로만 남겨 두어야 한다.
+            #>
+            $plain = ($req.Url -match '[?&]reply=text(&|$)')
 
             if (-not (Test-AllowedIP $peer)) {
                 Write-Log "거부: 허용되지 않은 접속 IP $peer  ($($req.Method) $($req.Url))" 'WARN'
-                Send-HttpResponse -stream $req.Stream -Status 403 -Payload @{ ok=$false; error='허용되지 않은 접속입니다. 같은 공유기에 연결되어 있는지 확인하세요.'; retryable=$false }
+                $msg = "접속 거부`n같은 공유기인지 확인`n[상태 점검]으로 허용 대역 보기"
+                Send-HttpResponse -stream $req.Stream -Status $(if ($plain) { 200 } else { 403 }) -PlainText:$plain `
+                    -Payload @{ ok=$false; error=$msg; reply=$msg; retryable=$false }
                 $client.Close()
                 continue
             }
@@ -935,8 +1262,21 @@ try {
               이걸 다 적으면 로그의 대부분이 자기 자신을 확인한 기록으로 채워져
               정작 문자가 오간 줄이 묻힌다. 실측으로 전체의 44% 였다.
             #>
+            <#
+              [기록 폴더]는 사용자가 직접 열어 보는 곳이다.
+              예전에는 여기에 POST·ct·len·ua 를 통째로 적어, 한 줄이 화면 폭을 다 먹고
+              정작 문자가 오간 줄이 묻혔다. 사람이 읽을 한 줄만 남기고
+              진단용 상세는 logRawBody 를 켰을 때만 적는다.
+            #>
             if ($req.Url -notlike '/health*') {
-                Write-Log "요청 $peer  $($req.Method) $($req.Url)  ct=$ct2  len=$($req.Body.Length)  ua=$ua2"
+                if ($path -eq '/sms' -or $path -eq '/') {
+                    Write-Log "문자 받음  ($peer)"
+                } else {
+                    Write-Log "요청 $($req.Method) $path  ($peer)"
+                }
+                if ($cfg.PSObject.Properties.Name -contains 'logRawBody' -and [bool]$cfg.logRawBody) {
+                    Write-Log "  (진단) $($req.Url)  ct=$ct2  len=$($req.Body.Length)  ua=$ua2"
+                }
             }
             # 폰에서 무엇이 넘어오는지 그대로 보고 싶을 때만 켠다.
             # 메시지 내용이 로그 파일에 남으므로 평소에는 꺼둔다.
@@ -954,6 +1294,18 @@ try {
                     dryRun     = [bool]$cfg.dryRun
                     paused     = [bool](Test-Paused)
                     lastDryRoom = $script:lastDryRoom
+                    <#
+                      화면에 보일 값이다. 열쇠에 붙은 'name:' 은 내부 표시이므로 떼어낸다.
+                      보내는 사람이 하나뿐이면 방 이름만 보여 주는 편이 읽기 쉽다.
+                    #>
+                    pins        = $(
+                        if ($script:pins.Count -eq 0) { $null }
+                        elseif ($script:pins.Count -eq 1) { @($script:pins.Values)[0] }
+                        else {
+                            ($script:pins.GetEnumerator() | ForEach-Object {
+                                "$($_.Key -replace '^name:','') → $($_.Value)"
+                            }) -join ', '
+                        })
                     pid        = $PID
                     windowMode = $winMode
                     trayIcon   = [bool]($notify -ne $null -and $notify.Visible)
@@ -964,29 +1316,76 @@ try {
                 }
             }
             elseif ($path -eq '/rooms') {
-                $rooms = @(Get-KakaoRoomWindows | Select-Object -ExpandProperty Title)
-                Send-HttpResponse -stream $req.Stream -Payload @{ ok=$true; rooms=$rooms }
+                <#
+                  열려 있는 채팅방 제목은 곧 사람 이름과 단톡방 이름이다.
+                  같은 공유기에 붙은 아무 기기나 볼 수 있으면 안 된다.
+                  진단용이므로 이 PC 에서만 답한다.
+                #>
+                if ($peer -notlike '127.0.0.1:*') {
+                    Send-HttpResponse -stream $req.Stream -Status 403 -Payload @{ ok=$false; error='이 PC 에서만 볼 수 있습니다.' }
+                } else {
+                    $rooms = @(Get-KakaoRoomWindows | Select-Object -ExpandProperty Title)
+                    Send-HttpResponse -stream $req.Stream -Payload @{ ok=$true; rooms=$rooms }
+                }
             }
             elseif ($path -eq '/sms' -or $path -eq '/') {
+                # 처리하는 동안 감시자가 좀비로 오해하지 않게 표시해 둔다
+                try { Set-Content $BusyFile (Get-Date -Format 'o') -Encoding UTF8 } catch { }
                 $f = Extract-SmsFields -req $req
-                if (Test-Paused) {
+                <#
+                  발신자 검사가 가장 앞에 와야 한다.
+
+                  예전에는 이 검사가 Handle-Sms 안에 있어서, 일시 중지 상태이거나
+                  본문이 비어 있으면 검사를 거치지 않고 답장 문구가 만들어졌다.
+                  그러면 광고 스팸이 올 때마다 그 번호로 답장 문자가 나간다.
+                  요금이 나가고, 상대에게 이 번호가 살아 있다는 것도 알려 준다.
+
+                  등록되지 않은 발신자에게는 정상 전송과 똑같은 응답을 돌려준다.
+                  응답이 다르면 번호를 하나씩 넣어보며 주인 번호를 알아낼 수 있다.
+                #>
+                if (-not (Test-AllowedSender $f.from)) {
+                    Write-Log "거부: 허용되지 않은 발신번호 '$($f.from)'" 'WARN'
+                    Send-HttpResponse -stream $req.Stream -Status 200 -PlainText:$plain `
+                        -Payload @{ ok=$false; silent=$true; retryable=$false
+                                    error='등록되지 않은 발신자입니다. PC 설정의 allowFrom 을 확인하세요.' }
+                }
+                elseif (Test-Paused) {
                     Write-Log "일시 중지 상태라 전달하지 않음: '$($f.text)'" 'WARN'
-                    Send-HttpResponse -stream $req.Stream -Status 200 -Payload @{
-                        ok=$false; paused=$true; retryable=$false
-                        error='문자 전달이 일시 중지 상태입니다. [카톡 릴레이] 창에서 다시 시작하세요.' }
+                    $msg = "일시 중지`n[카톡 릴레이] 창에서 다시 시작"
+                    Send-HttpResponse -stream $req.Stream -Status 200 -PlainText:$plain -Payload @{
+                        ok=$false; paused=$true; retryable=$false; error=$msg; reply=$msg }
                 }
                 elseif (-not $f.text) {
-                    Send-HttpResponse -stream $req.Stream -Status 400 -Payload @{ ok=$false; error='문자 내용을 찾지 못했습니다.' }
+                    $msg = '내용 없음'
+                    # 답장 모드는 언제나 200 이다. 400 을 돌려주면 중계 휴대폰이 요청 실패로 보고
+                    # 응답 변수를 제 오류 메시지로 덮어써, 표식 없는 값이 문자로 나간다.
+                    $code = if ($plain) { 200 } else { 400 }
+                    Send-HttpResponse -stream $req.Stream -Status $code -PlainText:$plain -Payload @{ ok=$false; error=$msg; reply=$msg }
                 } else {
                     $result = Handle-Sms -from $f.from -text $f.text
-                    # 포워더 앱은 200 이 아니면 최대 10회 재시도한다.
-                    # 재시도해도 소용없는 실패(인증/형식)는 200, 일시적 실패만 503 으로 돌려준다.
-                    $code = if ($result.retryable) { 503 } else { 200 }
-                    Send-HttpResponse -stream $req.Stream -Status $code -Payload $result
+                    # 카톡 전송이 실패하면 보낸 사람도 알아야 하므로 사유를 담는다.
+                    # 등록되지 않은 발신자에게만은 답장하지 않는다(silent).
+                    if (-not $result.ok -and -not $result.silent -and -not $result.reply) {
+                        $result['reply'] = [string]$result.error
+                    }
+                    <#
+                      포워더 앱은 200 이 아니면 최대 10회 재시도한다.
+                      재시도해도 소용없는 실패(인증/형식)는 200, 일시적 실패만 503 으로 돌려준다.
+
+                      다만 답장 모드에서는 언제나 200 으로 돌려준다.
+                      실패를 문자로 직접 알려 주므로 재시도에 맡길 이유가 없고,
+                      재시도에 맡기면 같은 답장 문자가 열 번 나갈 수 있다.
+                      덕분에 답장 모드에서 빈 응답이 오는 경우는
+                      '릴레이에 닿지 못했다' 하나뿐이 된다.
+                    #>
+                    $code = if ($result.retryable -and -not $plain) { 503 } else { 200 }
+                    Send-HttpResponse -stream $req.Stream -Status $code -PlainText:$plain -Payload $result
                 }
             }
             else {
-                Send-HttpResponse -stream $req.Stream -Status 404 -Payload @{ ok=$false; error='잘못된 주소입니다.' }
+                $msg = "주소 오류`n/sms 로 보내야 합니다"
+                Send-HttpResponse -stream $req.Stream -Status $(if ($plain) { 200 } else { 404 }) -PlainText:$plain `
+                    -Payload @{ ok=$false; error=$msg; reply=$msg }
             }
         } catch {
             <#
@@ -1000,8 +1399,21 @@ try {
                 # 같은 PC 에서 온 확인이 먼저 끊긴 것이므로 넘어간다
             } else {
                 Write-Log "요청 처리 오류 ($peer): $msg" 'ERR'
+                <#
+                  여기서 아무것도 안 보내면 중계 휴대폰은 응답을 못 받는다.
+                  그러면 표식 없는 값이 남아 'PC 에 닿지 못함' 으로 잘못 알리고,
+                  200 이 아니므로 포워더가 최대 10회까지 같은 요청을 되풀이한다.
+                  무슨 일이 있어도 한 번은 답하고 끝낸다.
+                #>
+                try {
+                    $emsg = "처리 중 오류`n[기록 폴더]에서 확인"
+                    Send-HttpResponse -stream $req.Stream -Status 200 -PlainText:$plain `
+                        -Payload @{ ok=$false; retryable=$false; error=$emsg; reply=$emsg }
+                } catch { }
             }
         } finally {
+            # 처리가 끝났으니 '일하는 중' 표시를 지운다
+            try { Remove-Item $BusyFile -Force -ErrorAction SilentlyContinue } catch { }
             $client.Close()
         }
     }

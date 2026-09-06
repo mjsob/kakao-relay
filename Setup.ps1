@@ -77,7 +77,12 @@ if (Test-Path $cfgPath) {
 
     if (-not $Phone) {
         Write-Host ''
-        $Phone = Read-Host '  문자를 보낼 폰 번호 (예: 01012345678)'
+        <#
+          여기 넣는 값은 allowFrom, 곧 '문자를 쳐서 보내는 쪽' 의 번호다.
+          '문자를 보낼 폰' 이라고 물으면 받는 쪽(중계 공기계) 번호로 읽혀,
+          반대 번호를 넣으면 모든 문자가 조용히 거부된다.
+        #>
+        $Phone = Read-Host '  카톡을 대신 보내라고 문자를 칠 폰 번호 (예: 01012345678)'
     }
     if ($Phone) { $cfg.allowFrom = @($Phone) }
     $cfg.allowIPs = @('127.0.0.1', $subnet)
@@ -167,7 +172,7 @@ Step '결과'
 
 try {
     $h = (Invoke-WebRequest -Uri "http://127.0.0.1:$($cfg.port)/health" -UseBasicParsing -TimeoutSec 10).Content
-    Say "  릴레이 응답: $h" 'Green'
+    Say '  카톡 릴레이가 정상 동작합니다.' 'Green'
 } catch {
     Say '  릴레이가 아직 응답하지 않습니다. Check-Ready.ps1 로 확인하세요.' 'Yellow'
 }
@@ -185,16 +190,31 @@ $guide = @"
 
 폰(MacroDroid)에 넣을 값
 ---------------------------------------
-  트리거       : 알림 (Notification) - 기본 문자 메시지 앱
-  URL          : http://$ip`:$($cfg.port)/sms?from={not_title}
+  트리거       : SMS 수신
+  URL          : http://$ip`:$($cfg.port)/sms?from=[SMS 번호]
   Method       : POST
   Content Type : text/plain
-  Body         : {notification}
+  Body         : [SMS 메시지]
+  Timeout      : 120 초
+
+  대괄호로 표시한 두 칸은 직접 입력하지 말고,
+  입력란 옆의 매직 텍스트({ } 모양 버튼) 에서 골라 넣으세요.
 
 문자 보내는 형식
 ---------------------------------------
   채팅방 내용            (예: 엄마 오늘 늦어요)
-  채팅방/내용            (채팅방 이름에 띄어쓰기가 있으면 이쪽)
+                         맨 처음 띄어쓰기가 채팅방과 내용을 가릅니다.
+  @채팅방                (예: @엄마)
+                         대상을 지정해 두면 이후에는 내용만 보내도 됩니다.
+                         @ 만 보내면 지정이 풀립니다.
+                         카카오톡에 없는 이름은 지정되지 않습니다.
+
+릴레이가 보내는 답장
+---------------------------------------
+  대상을 바꿨거나 전달에 실패했을 때만 [카톡] 으로 시작하는 문자가 옵니다.
+  정상적으로 전달되면 답장은 오지 않습니다.
+  답장 한 통마다 문자 요금이 듭니다.
+  부담이면 [카톡 릴레이] > [설정 편집] 에서 smsReply 를 false 로 바꾸세요.
 
 확인할 것
 ---------------------------------------

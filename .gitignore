@@ -10,6 +10,7 @@
 #   fail-shot.png    전송 실패 순간의 화면 (대화 내용이 찍힐 수 있다)
 # ---------------------------------------------------------------
 config.json
+pinned.json
 relay.log
 relay.log.old
 watchdog.log
@@ -21,6 +22,9 @@ fail-shot.png
 # ---------------------------------------------------------------
 paused.marker
 stopped.marker
+busy.marker
+pinned.json.tmp
+watchdog.log.old
 
 # ---------------------------------------------------------------
 # 설치할 때 각자 PC 에서 만들어지는 것

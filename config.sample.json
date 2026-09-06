@@ -43,5 +43,7 @@
   "_comment_logRawBody": "true 면 폰에서 받은 본문을 로그에 그대로 남긴다. 문제 추적할 때만.",
   "logRawBody": false,
   "_comment_joinWindowMs": "장문이 여러 통으로 쪼개져 올 때 이어붙일 대기 시간(ms). 0 이면 끔.",
-  "joinWindowMs": 0
+  "joinWindowMs": 0,
+  "_comment_smsReply": "false 면 답장 문자를 보내지 않는다. 문자 요금이 부담일 때 끈다. 끄면 대상 지정 결과와 전달 실패를 문자로 알 수 없다.",
+  "smsReply": true
 }

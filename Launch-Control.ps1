@@ -15,6 +15,15 @@ param([switch]$ConfirmQuit)
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 [System.Windows.Forms.Application]::EnableVisualStyles()
+<#
+  글자를 GDI 로 그리게 한다.
+
+  호출하지 않으면 WinForms 는 GDI+ 로 그리는데, GDI+ 는 글꼴에 없는 글자를
+  다른 글꼴에서 빌려오지 못한다. 맑은 고딕에는 이모지 글리프가 없어서
+  채팅방 이름에 이모지가 들어가면 두부(□)로 보였다.
+  GDI 는 글꼴 연결이 되어 이모지까지 제대로 그린다. 창을 만들기 전에 불러야 한다.
+#>
+[System.Windows.Forms.Application]::SetCompatibleTextRenderingDefault($false)
 
 # 콘솔은 숨긴다. GUI 뒤에 검은 창이 남아 있으면 지저분하다.
 if (-not ('WinCtl' -as [type])) {
@@ -143,11 +152,12 @@ function Test-HasTask {
 
 function Get-State {
     $listening = Test-Port $port
-    $kk = $null; $up = $null; $dry = $false; $dryRoom = $null
+    $kk = $null; $up = $null; $dry = $false; $dryRoom = $null; $pins = $null
     if ($listening) {
         try {
             $h = (Invoke-WebRequest -Uri "http://127.0.0.1:$port/health" -UseBasicParsing -TimeoutSec 4).Content | ConvertFrom-Json
             $kk = [bool]$h.kakaoTalk; $up = $h.uptimeMin; $dry = [bool]$h.dryRun
+            $pins = $h.pins
             $dryRoom = $h.lastDryRoom
         } catch { }
     }
@@ -160,6 +170,7 @@ function Get-State {
         Uptime  = $up
         DryRun  = $dry
         DryRoom = $dryRoom
+        Pins    = $pins
     }
 }
 
@@ -597,7 +608,7 @@ function Sync-Ui {
         $btnMain.Text = '설치하기'
         $script:showMain = $true; $script:showStop = $false
         Set-Layout
-    } elseif ($s.Paused) {
+    } elseif ($s.Paused -and $s.Running) {
         $script:dotColor = $C.Warn
         $lblState.Text = '일시 중지'
         $lblSub.Text   = '문자를 받아도 카카오톡으로 보내지 않습니다.'
@@ -605,12 +616,31 @@ function Sync-Ui {
         $btnMain.Text = '문자 전달 다시 시작'
         $script:showMain = $true; $script:showStop = $false
         Set-Layout
+    } elseif ($s.Running -and $s.Kakao -eq $false) {
+        <#
+          카카오톡이 꺼져 있으면 지금 문자가 와도 100% 실패한다.
+          그런데도 초록 불에 '전달 중' 이라고 적으면 창을 열어 확인한 사람이
+          된다고 믿고 그냥 닫는다. 창을 여는 유일한 이유가 '지금 되나' 인데
+          그 질문에 틀린 답을 주는 셈이다.
+        #>
+        $script:dotColor = $C.Amber
+        $lblState.Text = '카카오톡 꺼짐'
+        $lblSub.Text   = '지금 문자가 오면 보내지 못합니다.'
+        $lblHint.Text  = "카카오톡을 실행하고 로그인해 주세요.`r`n로그인하면 저절로 다시 전달합니다."
+        $script:showMain = $false; $script:showStop = $true
+        Set-Layout
     } elseif ($s.Running) {
         $script:dotColor = $C.Ok
         $lblState.Text = '전달 중'
         $k = if ($s.Kakao -eq $true) { '카카오톡 연결됨' } elseif ($s.Kakao -eq $false) { '카카오톡이 꺼져 있습니다' } else { '' }
         $u = Format-Uptime $s.Uptime
-        $lblSub.Text = (@($k,$u) | Where-Object { $_ }) -join '  ·  '
+        <#
+          '@이름' 으로 대상을 고정해 두면 그 뒤 문자는 방 이름 없이 그 방으로 간다.
+          고정된 줄 모르고 엉뚱한 곳으로 보내는 일이 없도록 상태 줄에 함께 드러낸다.
+          안내문 줄에만 적어 두면 눈에 잘 들어오지 않는다.
+        #>
+        $pn = if ($s.Pins) { "고정: $($s.Pins)" } else { '' }
+        $lblSub.Text = (@($k,$u,$pn) | Where-Object { $_ }) -join '  ·  '
         <#
           시험 모드는 방을 찾고 창을 여는 데까지 다 해 보고 마지막 전송만 건너뛴다.
           그러니 '어디로 갈 뻔했는지' 를 여기서 보여 줘야 확인이 끝난다.
@@ -629,7 +659,16 @@ function Sync-Ui {
                 "카카오톡으로 실제 전송하지 않습니다.`r`n문자를 한 통 보내 어느 채팅방으로 갈지 먼저 확인하세요."
             }
         } else {
-            $lblHint.Text = "문자를 보내면 카카오톡으로 전달됩니다.`r`n이 창은 닫아도 계속 동작합니다."
+            <#
+              '@이름' 으로 대상을 고정해 두면 그 뒤 문자는 방 이름 없이 그 방으로 간다.
+              고정된 줄 모르고 엉뚱한 곳으로 보내는 일이 없도록 여기에 드러낸다.
+            #>
+            # 고정된 대상은 위 상태 줄에 이미 적혀 있다. 여기서는 바꾸는 방법만 알린다.
+            $lblHint.Text = if ($s.Pins) {
+                "문자로 '@채팅방' 을 보내면 대상을 바꾸고,`r`n'@' 만 보내면 고정을 풉니다."
+            } else {
+                "문자를 보내면 카카오톡으로 전달됩니다.`r`n이 창은 닫아도 계속 동작합니다."
+            }
             $script:showMain = $false; $script:showStop = $true
         }
         Set-Layout
@@ -638,7 +677,7 @@ function Sync-Ui {
         $lblState.Text = '꺼짐'
         $lblSub.Text   = '릴레이가 실행되고 있지 않습니다.'
         $lblHint.Text  = '컴퓨터를 다시 켜면 저절로 실행됩니다.'
-        $btnMain.Text = '지금 다시 실행'
+        $btnMain.Text = '지금 켜기'
         $script:showMain = $true; $script:showStop = $false
         Set-Layout
     } else {
@@ -719,6 +758,7 @@ $btnMain.Add_Click({
             $j | ConvertTo-Json -Depth 6 | Set-Content $cfgFile -Encoding UTF8 -ErrorAction Stop
         } catch {
             $script:dotColor = $C.Warn
+            $script:uiMode = 'error'
             $lblState.Text = '시험 모드를 끄지 못했습니다'
             $lblSub.Text   = '설정 파일이 열려 있으면 닫고 다시 눌러 주세요.'
             $sdot.Invalidate(); $form.Refresh()
@@ -758,8 +798,14 @@ $btnMain.Add_Click({
     Start-Sleep -Milliseconds 600
     Sync-Ui
     if (-not (Get-State).Running) {
+        <#
+          8초마다 도는 갱신이 이 문구를 곧바로 덮어쓴다.
+          사용자가 읽기도 전에 화면이 원래대로 돌아가 무슨 일이 있었는지 알 수 없다.
+          다음에 버튼을 누를 때까지 남겨 둔다.
+        #>
+        $script:uiMode = 'error'
         $lblState.Text = '시작하지 못했습니다'
-        $lblSub.Text = '[상태 점검] 을 눌러 원인을 확인하세요.'
+        $lblSub.Text = '[상태 점검]을 눌러 무엇이 막고 있는지 확인하세요.'
         $script:dotColor = $C.Warn; $sdot.Invalidate()
     }
 })

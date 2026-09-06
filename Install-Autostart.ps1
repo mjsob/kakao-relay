@@ -37,9 +37,19 @@ if (Test-Path $relayEx) {
                 -WorkingDirectory $PSScriptRoot
 }
 $trigger  = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
+<#
+  작업 스케줄러의 자동 재시작은 쓰지 않는다.
+
+  예전에는 -RestartInterval 1분 -RestartCount 999 를 걸어 두었는데,
+  [프로그램 완전히 끝내기] 로 강제 종료하면 종료 코드가 0 이 아니라서
+  스케줄러가 '실패' 로 보고 1분 뒤 되살렸다. 스케줄러는 stopped.marker 를
+  보지 않으므로 사용자가 끈 것을 알 방법이 없다.
+
+  되살리는 일은 감시자(KakaoRelayWatchdog)가 맡는다. 그쪽은 표시 파일을
+  존중하므로 끈 것은 꺼진 채로 남는다.
+#>
 $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
-              -StartWhenAvailable -RestartInterval (New-TimeSpan -Minutes 1) -RestartCount 999 `
-              -ExecutionTimeLimit ([TimeSpan]::Zero)
+              -StartWhenAvailable -ExecutionTimeLimit ([TimeSpan]::Zero)
 
 Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $trigger -Settings $settings `
     -Description '문자 -> PC 카카오톡 릴레이' -Force | Out-Null

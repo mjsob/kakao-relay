@@ -60,7 +60,17 @@ $exclude  = @('config.json', 'relay.log', 'watchdog.log', 'fail-shot.png',
 # base-bubble.png 은 아이콘 원본이라 함께 넘긴다 (없으면 자체 도형으로 대체된다)
 $inner    = @('*.ps1', '*.vbs', 'config.sample.json', 'base-bubble.png')
 
-if (Test-Path $Destination) { Remove-Item $Destination -Recurse -Force }
+<#
+  넘겨받은 폴더를 통째로 지우므로, 실수로 D:\share 같은 곳을 지정하면 그게 다 날아간다.
+  마지막 조각이 우리가 만드는 이름일 때만 지운다.
+#>
+if (Test-Path $Destination) {
+    if ((Split-Path $Destination -Leaf) -ne 'kakao-relay-setup') {
+        Write-Host "  중단: -Destination 의 마지막 폴더 이름이 kakao-relay-setup 이어야 합니다." -ForegroundColor Red
+        return
+    }
+    Remove-Item $Destination -Recurse -Force
+}
 $program = Join-Path $Destination 'program'
 New-Item -ItemType Directory -Path $program -Force | Out-Null
 
@@ -115,13 +125,19 @@ foreach ($e in $exclude) {
     if (Test-Path (Join-Path $PSScriptRoot $e)) { Write-Host "    $e" -ForegroundColor DarkGray }
 }
 
-if ($Zip) {
-    $zipPath = "$Destination.zip"
-    if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
-    Compress-Archive -Path (Join-Path $Destination '*') -DestinationPath $zipPath
-    Write-Host ''
-    Write-Host "  압축: $zipPath" -ForegroundColor Green
-}
+<#
+  압축은 언제나 한다.
+
+  예전에는 -Zip 을 줄 때만 만들었는데, 그러면 폴더만 새로 만들어지고
+  옆에 있는 낡은 zip 이 아무 말 없이 그대로 남는다. 그 zip 을 릴리스에 올려
+  고친 내용이 빠진 채 배포될 뻔한 일이 실제로 있었다.
+  만드는 데 1초도 안 걸리므로 선택지로 둘 이유가 없다.
+#>
+$zipPath = "$Destination.zip"
+if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
+Compress-Archive -Path (Join-Path $Destination '*') -DestinationPath $zipPath
+Write-Host ''
+Write-Host "  압축: $zipPath" -ForegroundColor Green
 
 Write-Host ''
 Write-Host '  받는 사람이 할 일' -ForegroundColor White

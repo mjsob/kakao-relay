@@ -518,6 +518,8 @@ function Send-KakaoMessage {
 
     $usedOffset = $null
     $openMode   = 'existing'
+    $unverified = $false
+    $approx     = $false
 
     # 1) 이미 열려 있는 채팅방 창 찾기
     $win = Find-KakaoRoomWindow -Room $Room
@@ -538,6 +540,8 @@ function Send-KakaoMessage {
         }
         $usedOffset = $opened.rowOffset
         $openMode   = $opened.mode
+        $unverified = [bool]$opened.unverified
+        $approx     = [bool]$opened.approx
         $win = $opened.window
         $box = if ($opened.mode -eq 'inline') { $opened.input } else { Get-KakaoInputBox -RoomHwnd $win.Hwnd }
     }
@@ -550,12 +554,30 @@ function Send-KakaoMessage {
     }
 
     if ($DryRun) {
+        <#
+          보내지만 않을 뿐 방을 열어 본 것은 실제 전송과 같다.
+          열어 둔 채로 두면 그 방에 오는 메시지가 계속 읽음 처리되므로
+          실제 전송과 똑같이 닫아 준다.
+          (inline 로 열렸을 때 $win 은 메인창이므로 절대 닫으면 안 된다)
+        #>
+        $dryTitle = $win.Title
+        $dryClosed = $false
+        if (-not $KeepOpen) {
+            $mainD = Get-KakaoMainWindow
+            $mhD   = if ($mainD) { [int64]$mainD.Hwnd } else { 0 }
+            if ($openMode -ne 'inline' -and [int64]$win.Hwnd -ne $mhD) {
+                [void][KK]::PostMessage($win.Hwnd, $Script:WM_CLOSE, [IntPtr]::Zero, [IntPtr]::Zero)
+                Start-Sleep -Milliseconds 300
+                $dryClosed = -not [KK]::IsWindow($win.Hwnd)
+            }
+        }
         return [pscustomobject]@{
-            ok=$true; dryRun=$true; room=$win.Title
+            ok=$true; dryRun=$true; room=$dryTitle; unverified=$unverified
             windowHwnd=("0x{0:X}" -f [int64]$win.Hwnd)
             inputHwnd =("0x{0:X}" -f [int64]$box.Hwnd)
             inputClass=$box.Class
             openMode=$openMode; rowOffset=$usedOffset
+            closed=$dryClosed
             wouldSend=$Text
         }
     }
@@ -734,6 +756,8 @@ function Send-KakaoMessage {
 
     return [pscustomobject]@{
         ok         = $sent
+        unverified = $unverified
+        approx     = $approx
         room       = $win.Title
         text       = $Text
         openMode   = $openMode
@@ -999,6 +1023,139 @@ function Invoke-KakaoSearch {
 }
 
 <#
+  검색 결과 목록이 비어 있는지 그림으로 확인한다.
+
+  왜 그림인가:
+    검색 결과 목록은 EVA_VH_ListControl_Dblclk 라는 카카오 자체 컨트롤이다.
+    항목 수를 물어볼 방법이 없다 - 실측 결과 LB_GETCOUNT/LVM_GETITEMCOUNT 는 모두 0,
+    UI Automation 에는 이름 없는 Pane 하나만 올라오고, 자식 창 구성도 결과 유무와
+    관계없이 완전히 같다. 창 크기마저 같다(325x542 고정).
+    남은 단서는 실제로 그려진 픽셀뿐이다.
+
+    실측: 결과가 있으면 첫 행 영역의 96% 가 배경색과 다르고,
+          결과가 없으면 컨트롤 전체가 배경색 단색이다.
+
+  왜 필요한가:
+    없는 방을 찾을 때 Enter 6회(약 7초)와 좌표 더블클릭 8회(약 10초)를
+    채팅 탭과 친구 탭에서 각각 되풀이한다. 빈 목록에 하는 헛발질로 40초가 넘게 걸린다.
+    비었다는 것을 먼저 알면 그 전부를 건너뛴다.
+
+  판단 불가일 때는 $null 을 돌려준다. 확실할 때만 건너뛰고, 아니면 원래대로 다 해 본다.
+#>
+function Test-KakaoSearchEmpty {
+    param([Parameter(Mandatory)]$List)
+
+    $w = $List.Rect.Right  - $List.Rect.Left
+    $h = $List.Rect.Bottom - $List.Rect.Top
+    if ($w -lt 40 -or $h -lt 40) { return $null }
+
+    $bmp = $null; $data = $null; $g = $null; $hdc = [IntPtr]::Zero
+    try {
+        <#
+          타입 만들기도 try 안에서 한다.
+          컴파일이 막히는 환경(백신, TEMP 잠김)에서 밖에 두면 예외가 위로 튀어
+          '판단 불가' 로 떨어지지 않고 전송 자체가 실패한다.
+        #>
+        if (-not ('KKShot' -as [type])) {
+            Add-Type -AssemblyName System.Drawing
+            Add-Type @'
+using System;using System.Runtime.InteropServices;
+public class KKShot{
+ [DllImport("user32.dll")] public static extern bool PrintWindow(IntPtr h,IntPtr hdc,uint f);
+}
+'@
+        }
+        $bmp = New-Object Drawing.Bitmap $w, $h, ([Drawing.Imaging.PixelFormat]::Format32bppArgb)
+        $g   = [Drawing.Graphics]::FromImage($bmp)
+        $hdc = $g.GetHdc()
+        # PW_RENDERFULLCONTENT(2): 화면에 가려져 있어도 컨트롤이 스스로 그리게 한다
+        $okDraw = [KKShot]::PrintWindow([IntPtr]$List.Hwnd, $hdc, 2)
+        $g.ReleaseHdc($hdc); $hdc = [IntPtr]::Zero
+        $g.Dispose(); $g = $null
+        if (-not $okDraw) { return $null }
+
+        $rect = New-Object Drawing.Rectangle 0, 0, $w, $h
+        $data = $bmp.LockBits($rect, [Drawing.Imaging.ImageLockMode]::ReadOnly, [Drawing.Imaging.PixelFormat]::Format32bppArgb)
+        $stride = $data.Stride
+        $buf = New-Object byte[] ($stride * $h)
+        [Runtime.InteropServices.Marshal]::Copy($data.Scan0, $buf, 0, $buf.Length)
+
+        <#
+          배경색은 목록의 네 귀퉁이에서 뽑아 가장 많은 색을 쓴다.
+          한 점만 보면 그 자리가 하필 내용이거나, 화면 배율 때문에
+          비트맵이 잘려 엉뚱한 곳을 짚었을 때 판정이 통째로 흔들린다.
+          밝은 테마든 어두운 테마든 실제 색을 따라간다.
+        #>
+        $xs = @(5, ($w - 6), 5, ($w - 6))
+        $ys = @(5, 5, ($h - 6), ($h - 6))
+        $keys = New-Object System.Collections.Generic.List[string]
+        for ($k = 0; $k -lt 4; $k++) {
+            $ci = $ys[$k] * $stride + $xs[$k] * 4
+            if ($ci -ge 0 -and ($ci + 2) -lt $buf.Length) {
+                $keys.Add(("{0},{1},{2}" -f $buf[$ci], $buf[$ci+1], $buf[$ci+2]))
+            }
+        }
+        if ($keys.Count -eq 0) { return $null }
+        $best  = $keys | Group-Object | Sort-Object Count -Descending | Select-Object -First 1
+        $parts = $best.Name -split ','
+        $bB = [int]$parts[0]; $bG = [int]$parts[1]; $bR = [int]$parts[2]
+
+        <#
+          PrintWindow 가 실패하면 비트맵이 통째로 검정으로 남는다.
+          그것을 '결과 없음' 으로 읽으면 멀쩡한 방을 없다고 하게 되므로,
+          순수 검정 배경은 판단하지 않는다.
+        #>
+        if ($bR -eq 0 -and $bG -eq 0 -and $bB -eq 0) { return $null }
+
+        <#
+          목록 위쪽만 본다. 검색 결과는 언제나 첫 행부터 채워지므로
+          위 240px(약 세 줄)만 보아도 충분하다. 전체를 훑으면
+          결과가 없을 때 조기 종료가 안 되어 스캔에만 1초 넘게 걸린다.
+          간격도 5px 로 성기게 잡는다. 실측상 결과가 있으면 첫 행의 96% 가
+          배경과 다르므로, 성기게 보아도 놓칠 수 없다.
+        #>
+        $yEnd = [Math]::Min($h - 2, 240)
+        $diff = 0
+        for ($y = 2; $y -lt $yEnd; $y += 5) {
+            $row = $y * $stride
+            for ($x = 2; $x -lt $w - 2; $x += 5) {
+                $i = $row + $x * 4
+                if ([Math]::Abs($buf[$i] - $bB) + [Math]::Abs($buf[$i+1] - $bG) + [Math]::Abs($buf[$i+2] - $bR) -gt 30) {
+                    $diff++
+                    if ($diff -ge 12) { return $false }   # 뭔가 그려져 있다 = 결과 있음
+                }
+            }
+        }
+        return $true
+    } catch {
+        return $null
+    } finally {
+        if ($data) { try { $bmp.UnlockBits($data) } catch {} }
+        if ($g)    { try { if ($hdc -ne [IntPtr]::Zero) { $g.ReleaseHdc($hdc) }; $g.Dispose() } catch {} }
+        if ($bmp)  { try { $bmp.Dispose() } catch {} }
+    }
+}
+
+<#
+  목록이 정말 비었는지 시간을 두고 거듭 확인한다.
+
+  한 번만 보면 아직 그리는 중인 화면을 비었다고 볼 수 있다.
+  특히 부팅 직후에는 카카오톡이 목록 컨트롤을 먼저 띄우고 내용을 나중에 그린다.
+  있는 방을 없다고 하는 것이 가장 나쁜 실패이므로, 간격을 두고 세 번 모두
+  비었을 때만 비었다고 본다. 한 번이라도 내용이 보이거나 판단이 서지 않으면 아니다.
+
+  이 값이 참일 때만 헛발질을 건너뛴다. 없는 방일 때만 치르는 비용이라 1초는 싸다.
+#>
+function Test-KakaoSearchEmptyStable {
+    param([Parameter(Mandatory)]$List)
+    foreach ($wait in @(250, 400, 700)) {
+        Start-Sleep -Milliseconds $wait
+        if ((Test-KakaoSearchEmpty -List $List) -ne $true) { return $false }
+    }
+    return $true
+}
+
+<#
   검색 결과 목록을 키보드로 열어 본다.
 
   검색을 하면 첫 번째 항목이 이미 선택된 상태다(실측). 그래서
@@ -1040,16 +1197,28 @@ function Open-KakaoRoomByKeys {
                Select-Object -First 1
         if ($new) {
             $opened++
-            $match = ($new.Title -eq $Room) -or ($new.Title.Replace(' ','').StartsWith($Room.Replace(' ','')))
+            <#
+              이름이 똑같은지, 앞부분만 같은지를 구분해 둔다.
+              '엄마' 로 보냈는데 '엄마들 모임' 이 열릴 수 있다. 앞부분만 맞은 경우에는
+              어디로 갔는지 보낸 사람에게 알려 줘야 한다. 성공하면 답장이 없어서
+              지금은 엉뚱한 방으로 간 것을 끝내 모른다.
+            #>
+            $exact = ($new.Title -eq $Room)
+            $match = $exact -or ($new.Title.Replace(' ','').StartsWith($Room.Replace(' ','')))
             if ($match -and -not (Get-KakaoInputBox -RoomHwnd $new.Hwnd)) { $match = $false }
-            if ($match) { return [pscustomobject]@{ ok=$true; mode='window'; window=$new; rowOffset="key$i" } }
+            if ($match) { return [pscustomobject]@{ ok=$true; mode='window'; window=$new; rowOffset="key$i"; approx=(-not $exact) } }
             [void][KK]::PostMessage($new.Hwnd, 0x0010, [IntPtr]::Zero, [IntPtr]::Zero)   # WM_CLOSE
             Start-Sleep -Milliseconds 400
             continue
         }
         if ($mainHwnd -ne 0) {
             $inline = Get-KakaoInlineInput -MainHwnd ([IntPtr]$mainHwnd)
-            if ($inline) { return [pscustomobject]@{ ok=$true; mode='inline'; window=$mainWin; input=$inline; rowOffset="key$i" } }
+            <#
+              메인창 안에서 열린 경우(inline)에는 어느 방이 열렸는지 제목으로 확인할 수 없다.
+              열렸다는 것만 알 뿐이라, 검색 결과 첫 줄이 무엇이든 거기로 들어간다.
+              그대로 두면 고정 대상으로도 저장되므로 확인 불가임을 표시해 둔다.
+            #>
+            if ($inline) { return [pscustomobject]@{ ok=$true; mode='inline'; window=$mainWin; input=$inline; rowOffset="key$i"; unverified=$true } }
         }
     }
     return [pscustomobject]@{ ok=$false; opened=$opened }
@@ -1075,10 +1244,11 @@ function Open-KakaoRoomFromList {
                Where-Object { $_.Visible -and $_.Title -and ($before -notcontains [int64]$_.Hwnd) -and ([int64]$_.Hwnd -ne $mainHwnd) } |
                Select-Object -First 1
         if ($new) {
-            $match = ($new.Title -eq $Room) -or ($new.Title.Replace(' ','').StartsWith($Room.Replace(' ','')))
+            $exact = ($new.Title -eq $Room)
+            $match = $exact -or ($new.Title.Replace(' ','').StartsWith($Room.Replace(' ','')))
             # 친구 프로필 카드는 제목이 이름과 같지만 입력창이 없다. 그것까지 걸러낸다.
             if ($match -and -not (Get-KakaoInputBox -RoomHwnd $new.Hwnd)) { $match = $false }
-            if ($match) { return [pscustomobject]@{ ok=$true; mode='window'; window=$new; rowOffset=$off } }
+            if ($match) { return [pscustomobject]@{ ok=$true; mode='window'; window=$new; rowOffset=$off; approx=(-not $exact) } }
             [void][KK]::PostMessage($new.Hwnd, 0x0010, [IntPtr]::Zero, [IntPtr]::Zero)   # WM_CLOSE
             Start-Sleep -Milliseconds 400
             continue
@@ -1086,7 +1256,7 @@ function Open-KakaoRoomFromList {
 
         if ($mainHwnd -ne 0) {
             $inline = Get-KakaoInlineInput -MainHwnd ([IntPtr]$mainHwnd)
-            if ($inline) { return [pscustomobject]@{ ok=$true; mode='inline'; window=$mainWin; input=$inline; rowOffset=$off } }
+            if ($inline) { return [pscustomobject]@{ ok=$true; mode='inline'; window=$mainWin; input=$inline; rowOffset=$off; unverified=$true } }
         }
     }
     return [pscustomobject]@{ ok=$false }
@@ -1111,9 +1281,23 @@ function Open-KakaoRoom {
     # ---- 1) 채팅 목록에서 찾는다. 대부분 여기서 끝난다 ----
     if (-not (Test-KakaoChatTabActive -Main $mw -WaitMs 2500)) { [void](Select-KakaoChatTab -Main $mw) }
     $found = Invoke-KakaoSearch -Text $Room -Tab chat
+    $chatEmpty = $false
     if ($found) {
-        $r = Open-KakaoRoomByKeys -Room $Room -List $found.list
-        if (-not $r.ok -and $r.opened -eq 0) {
+        # 목록이 비어 있으면 Enter 6회도 좌표 8회도 전부 헛발질이다. 먼저 확인해 줄인다.
+        $chatEmpty = Test-KakaoSearchEmptyStable -List $found.list
+    }
+    if ($found) {
+        <#
+          비었다고 판단했더라도 한 번은 실제로 눌러 본다.
+
+          픽셀 판정은 목록이 아직 안 그려졌거나 화면 배율 때문에 틀릴 수 있다.
+          완전히 건너뛰면 그 오판이 곧바로 '채팅방 없음' 확정이 되어,
+          멀쩡한 방으로 다시는 보낼 수 없게 된다. 재시도도 하지 않는 실패다.
+          한 번(약 1초)만 확인하면 40초를 1초로 줄이면서도 오판이 치명상이 되지 않는다.
+        #>
+        $maxTry = if ($chatEmpty) { 1 } else { 6 }
+        $r = Open-KakaoRoomByKeys -Room $Room -List $found.list -MaxItems $maxTry
+        if (-not $r.ok -and $r.opened -eq 0 -and -not $chatEmpty) {
             $r = Open-KakaoRoomFromList -Room $Room -List $found.list -RowOffsets $RowOffsets -WaitMs $WaitMs
         }
         Clear-KakaoSearch
@@ -1127,9 +1311,14 @@ function Open-KakaoRoom {
     if ($mw -and (Select-KakaoFriendTab -Main $mw)) {
         $found2 = Invoke-KakaoSearch -Text $Room -Tab friend
         $r2 = $null
+        $friendEmpty = $false
         if ($found2) {
-            $r2 = Open-KakaoRoomByKeys -Room $Room -List $found2.list
-            if (-not $r2.ok -and $r2.opened -eq 0) {
+            $friendEmpty = Test-KakaoSearchEmptyStable -List $found2.list
+        }
+        if ($found2) {
+            $maxTry2 = if ($friendEmpty) { 1 } else { 6 }
+            $r2 = Open-KakaoRoomByKeys -Room $Room -List $found2.list -MaxItems $maxTry2
+            if (-not $r2.ok -and $r2.opened -eq 0 -and -not $friendEmpty) {
                 $r2 = Open-KakaoRoomFromList -Room $Room -List $found2.list -RowOffsets $RowOffsets -WaitMs $WaitMs
             }
         }
