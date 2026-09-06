@@ -1295,7 +1295,41 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
         <code>java.net.SocketException ...</code> 같은 <b>자기 오류 메시지로 덮어씁니다.</b>
         그대로 두면 그 문장이 문자로 나가므로, <code>[카톡]</code>이 붙어 있는지로 구분합니다.</p>
 
+      <div class="cal cal--tip">
+        <b class="cal-h">완성된 매크로를 받아서 가져오면 아래 8단계를 건너뜁니다.</b>
+        <p>액션을 하나씩 만드는 대신, 다 만들어 둔 매크로 파일을 불러올 수 있습니다.</p>
+        <ol class="steps" role="list">
+          <li><b>파일 내려받기</b>
+            <p><a href="https://github.com/mjsob/kakao-relay/releases/latest/download/kakao-relay.macro"
+                  target="_blank" rel="noopener noreferrer">kakao-relay.macro<span class="sr-only">, 새 창에서 열립니다</span></a>
+              를 중계 휴대폰에 내려받으세요.</p>
+          </li>
+          <li><b>가져오기</b>
+            <p>MacroDroid 메인 화면의 <b>백업 · 복원</b>으로 들어가 <b>업로드</b>에서 그 파일을 고르면 됩니다.</p>
+          </li>
+          <li><b>IP 주소 고치기</b>
+            <p><b>HTTP 요청</b> 액션을 열어 URL 의 <code>192.168.0.10</code>을
+              <b>내 PC 주소</b>로 바꾸세요. 나머지는 손대지 않습니다.</p>
+            <div class="codewrap">
+<pre>받은 그대로   http://192.168.0.10:8787/sms?from=[SMS 번호]&amp;reply=text
+고친 뒤      http://<span data-ip>내 IP 주소</span>:8787/sms?from=[SMS 번호]&amp;reply=text</pre>
+            </div>
+          </li>
+          <li><b>발신 번호 고치기</b>
+            <p><b>SMS 수신</b> 트리거를 열어 번호 <code>01012345678</code>을
+              <b>문자를 보낼 휴대폰 번호</b>로 바꾸세요.
+              이 번호에서 온 문자만 전달합니다. 바꾸지 않으면 아무 문자도 전달되지 않습니다.</p>
+          </li>
+          <li><b>권한과 켜짐 확인</b>
+            <p>문자 보내기 권한을 묻거든 허용하고, 매크로 목록에서 스위치가 켜져 있는지 확인하세요.
+              다 고쳤으면 매크로 이름도 편한 대로 바꾸면 됩니다.</p>
+          </li>
+        </ol>
+        <p>고칠 두 곳은 매크로 이름과 설명에도 적어 두었으니, 가져온 뒤 목록에서 바로 보입니다.</p>
+      </div>
+
       <p>위에서 만든 <b>SMS 수신</b> 매크로에 액션을 더합니다. 순서가 중요합니다.</p>
+      <p>파일을 가져왔다면 여기부터는 읽지 않아도 됩니다.</p>
       <ol class="steps" role="list">
         <li><b>맨 앞에서 변수를 비워 둡니다</b>
           <dl class="fields">

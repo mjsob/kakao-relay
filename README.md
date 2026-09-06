@@ -39,6 +39,9 @@
 
 압축을 풀고 `KakaoRelay.bat`을 실행한 뒤 **설치하기**를 누르세요.
 
+중계 휴대폰은 [완성된 매크로 파일](https://github.com/mjsob/kakao-relay/releases/latest/download/kakao-relay.macro)을
+MacroDroid 메인 화면의 **백업 · 복원 > 업로드**로 가져온 뒤, **IP 주소**와 **발신 번호** 두 곳만 고치면 됩니다.
+
 설치 직후에는 **시험 모드**라 카카오톡으로 실제 전송하지 않습니다.
 문자를 한 통 보내 어느 채팅방으로 갈지 확인한 뒤, 조작 창에서 **시험 모드 해제**를 누르세요.
 
