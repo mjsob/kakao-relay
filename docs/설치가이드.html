@@ -444,6 +444,8 @@ h3 .tag, h4 .tag{
 h3 .tag--req, h4 .tag--req{color:var(--warn);background:var(--warn-bg);border:1px solid var(--warn-line)}
 h3 .tag--opt, h4 .tag--opt{color:var(--muted);background:var(--sunken);border:1px solid var(--line)}
 /* 권장 표시. 금지도 선택도 아닌 '이쪽을 고르라' 는 뜻이라 강조색을 쓴다 */
+/* '권장하지 않음' 은 '필수' 와 같은 색을 쓰면 안 된다. 정반대 뜻이 같은 빨강으로 보인다. */
+h3 .tag--warn, h4 .tag--warn{color:var(--muted);background:var(--sunken);border:1px dashed var(--line-2)}
 h3 .tag--rec, h4 .tag--rec{color:var(--accent);background:var(--accent-bg);border:1px solid var(--accent-line)}
 
 p{margin:0 0 16px;max-width:var(--measure)}
@@ -909,6 +911,11 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
         <table>
           <tbody>
             <tr>
+              <th scope="row">발신 휴대폰</th>
+              <td>평소 쓰는 휴대폰입니다. 여기서 중계 휴대폰으로 문자를 보내면 그 내용이 카카오톡으로 나갑니다.
+                문자만 보낼 수 있으면 되고, 앱은 설치하지 않습니다.</td>
+            </tr>
+            <tr>
               <th scope="row">PC</th>
               <td><span class="u">Windows 10/11</span>이 설치된 PC가 필요합니다. 카카오톡을 설치하고 로그인한 상태로 두세요.</td>
             </tr>
@@ -1066,6 +1073,8 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
         <h2 id="s3h">연결 확인</h2>
       </div>
 
+      <p>휴대폰에서 무언가를 만들기 전에, <b>중계 휴대폰에서 PC 가 보이는지</b> 30초 만에 확인합니다.
+        여기가 안 되면 뒤 단계를 다 해도 소용이 없습니다.</p>
       <p>중계 휴대폰의 브라우저에서 아래 주소로 접속하세요.</p>
       <div class="codewrap">
 <pre>http://<span data-ip>내 IP 주소</span>:8787/health</pre>
@@ -1076,9 +1085,8 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
         <li>중계 휴대폰과 PC가 같은 Wi-Fi 네트워크에 연결되어 있는지 확인하세요.
           공유기가 <span class="u">2.4GHz와 5GHz</span>를 서로 다른 네트워크로 나누어 두었다면 연결되지 않습니다.</li>
         <li><b>상태 점검</b>을 눌러 <b>방화벽 인바운드</b> 항목이 정상인지 확인하세요.
-          규칙이 없다고 나오면 <code>program</code> 폴더의 <code>Setup.ps1</code>을
-          <b>마우스 오른쪽 버튼 클릭 &gt; PowerShell로 실행</b>하세요.
-          권한 창이 나타나면 <b>[예]</b>를 선택합니다.</li>
+          규칙이 없다고 나오면 <code>KakaoRelay.bat</code>을 다시 열고 <b>설치하기</b>를 한 번 더 누르세요.
+          권한 창이 나타나면 <b>[예]</b>를 선택합니다. 기존 설정은 그대로 남습니다.</li>
         <li><code>접속 거부</code>라는 응답이 표시되면 PC까지는 닿았지만 IP가 허용 목록에 없는 상태입니다.
           <a href="#s9">09 문제 해결</a>을 참고해 <code>allowIPs</code>를 수정하세요.</li>
       </ul>
@@ -1097,29 +1105,44 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
           <p>Play 스토어에서 <b>MacroDroid</b>를 설치하세요. 무료 버전으로 충분합니다.</p>
         </li>
         <li><b>매크로 파일 내려받기</b>
-          <p>중계 휴대폰의 브라우저로 아래 파일을 내려받으세요.</p>
+          <p>여기부터는 중계 휴대폰에서 합니다. 중계 휴대폰의 브라우저로 이 문서를 열고 아래 링크를 누르세요.</p>
+          <p>PC 에서 받았다면 USB 로 옮기거나 메신저의 <b>나에게 보내기</b>로 휴대폰에 전달해도 됩니다.
+            내려받을 때 <b>이 유형의 파일은 기기에 해를 끼칠 수 있습니다</b>라는 경고가 뜨면 <b>계속</b>을 누르세요.
+            파일은 휴대폰의 <b>다운로드</b> 폴더에 저장됩니다.</p>
           <p><a class="dl" href="https://github.com/mjsob/kakao-relay/releases/latest/download/kakao-relay.macro"
                 target="_blank" rel="noopener noreferrer">kakao-relay.macro 내려받기<span class="sr-only">, 새 창에서 열립니다</span></a></p>
         </li>
         <li><b>가져오기</b>
-          <p>MacroDroid 메인 화면에서 <b>백업 · 복원</b>으로 들어가 <b>업로드</b>를 누르고, 내려받은 파일을 고르세요.</p>
-          <p>매크로 목록에 <b>카톡 릴레이 (IP·발신번호 수정 필요)</b>가 생깁니다.</p>
+          <p>가장 쉬운 길은 <b>파일 관리 앱에서 다운로드 폴더의 <code>kakao-relay.macro</code>를 그냥 누르는 것</b>입니다.
+            MacroDroid 가져오기 화면이 바로 열립니다.</p>
+          <p>MacroDroid 안에서 하려면 앱을 열고 <b>왼쪽 위 줄 세 개(≡)</b>를 누른 뒤
+            <b>백업 · 복원</b>으로 들어가 <b>업로드</b>를 누릅니다.
+            구글 드라이브 쪽이 아니라 <b>휴대폰 안의 파일</b>을 고르는 항목을 찾아 다운로드 폴더의 파일을 고르세요.</p>
+          <p>이름은 업로드지만 <b>인터넷에 올리는 것이 아니라 이 휴대폰 안으로 가져오는 것</b>입니다.</p>
+          <p>매크로 목록에 <b>카톡 릴레이 (IP·발신번호 수정 필요)</b>가 생기면 된 것입니다.</p>
         </li>
         <li><b>IP 주소 고치기</b>
           <p>그 매크로를 열고 <b>HTTP 요청</b> 액션을 누른 뒤, URL 의 IP 주소를 내 PC 주소로 바꾸세요.
-            나머지는 손대지 않습니다.</p>
+            숫자 네 덩어리만 바꾸고 앞뒤 <code>http://</code>와 <code>:8787/sms?...</code>는 글자 하나 건드리지 마세요.</p>
+          <p>넣을 주소는 <a href="#s3">03 연결 확인</a>에서 접속했던 그 주소입니다.
+            모르겠으면 PC 조작 창의 <b>상태 점검</b>에 나오는 <b>LAN IP</b>를 보세요.</p>
+          <p>잘못 고쳤다면 매크로를 지우고 파일을 다시 가져오면 처음 상태로 돌아갑니다.</p>
           <div class="codewrap">
-<pre>받은 그대로   http://192.168.0.10:8787/sms?from=[SMS 번호]&amp;reply=text
-고친 뒤      http://<span data-ip>내 IP 주소</span>:8787/sms?from=[SMS 번호]&amp;reply=text</pre>
+<pre>받은 그대로   http://192.168.0.10:8787/sms?from={sms_number}&amp;reply=text
+고친 뒤      http://<span data-ip>내 IP 주소</span>:8787/sms?from={sms_number}&amp;reply=text</pre>
           </div>
         </li>
         <li><b>발신 번호 고치기</b>
-          <p><b>SMS 수신</b> 트리거를 누르고, 번호 <code>01012345678</code>을
-            <b>문자를 보낼 휴대폰 번호</b>로 바꾸세요.</p>
+          <p><b>SMS 수신</b>을 누르면 발신자를 정하는 창이 뜹니다.
+            번호를 직접 적는 칸에 <code>01012345678</code>이 이미 들어 있으니,
+            그 숫자만 지우고 <b>문자를 보낼 휴대폰 번호</b>를 적으세요.
+            <b>하이픈 없이 숫자만</b> 넣습니다.</p>
           <p>이 번호에서 온 문자만 전달합니다. <b>바꾸지 않으면 아무 문자도 전달되지 않습니다.</b></p>
         </li>
         <li><b>저장하고 켜기</b>
-          <p>오른쪽 위 <b>저장</b>을 누르세요. 매크로 목록에서 스위치가 <b>켜짐</b>인지 확인합니다.
+          <p>트리거와 액션 창에서 누르는 <b>확인</b>과, 매크로 전체를 저장하는 <b>저장</b>은 다릅니다.
+            고친 뒤 오른쪽 위 <b>저장</b>까지 눌러야 반영됩니다. 저장하지 않고 뒤로 가면 고친 것이 사라집니다.</p>
+          <p>매크로 목록에서 스위치가 <b>켜짐</b>인지 확인합니다.
             다 고쳤으면 매크로 이름은 편한 대로 바꾸어도 됩니다.</p>
         </li>
         <li><b>권한 허용</b>
@@ -1127,8 +1150,11 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
             문자를 받는 데에도 답장을 보내는 데에도 필요합니다.</p>
         </li>
         <li><b>절전 최적화 해제</b>
-          <p><b>설정 &gt; 배터리 &gt; MacroDroid</b>에서 절전 최적화를 해제하세요.
-            중계 휴대폰은 충전기를 연결해 항상 켜 둡니다.</p>
+          <p>휴대폰 <b>설정</b>을 열고 위쪽 돋보기에 <b>배터리</b>를 검색하세요.
+            앱별 절전 목록(제조사에 따라 <b>앱 절전 관리</b>, <b>배터리 사용량 최적화</b> 등으로 부릅니다)에서
+            <b>MacroDroid</b>를 찾아 <b>제한 안 함</b>으로 두세요.
+            이걸 안 하면 몇 시간 뒤에 저절로 멈춥니다.</p>
+          <p>중계 휴대폰은 충전기를 연결해 항상 켜 둡니다.</p>
         </li>
       </ol>
 
@@ -1138,7 +1164,9 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
           대상을 바꿨거나 전달에 실패했을 때만 답장이 오고, 잘 전달되면 아무것도 오지 않습니다.
           답장 한 통마다 문자 요금이 듭니다.</p>
         <p>답장이 필요 없으면 <a href="#s11">11 설정 바꾸기</a>에서 끌 수 있습니다.
-          직접 만들어 보거나 어떻게 돌아가는지 알고 싶다면 <a href="#s15">15 부록</a>을 보세요.</p>
+          가져오기가 잘 되지 않거나 직접 만들어 보고 싶다면 <a href="#s15">15 부록 · 매크로를 직접 만들기</a>를 보세요.</p>
+        <p>여기까지 했으면 <a href="#s5">05 발신자 등록</a>으로 넘어가세요.
+          실제로 동작하는지는 <a href="#s6">06 시험 전송과 전송 켜기</a>에서 확인합니다.</p>
       </div>
 
       <div class="cal cal--warn">
@@ -1157,7 +1185,6 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
 <p>조작 창에서 <b>설정 편집</b>을 누르면 설정 파일 <code>config.json</code>이 메모장으로 열립니다.
         여기에서 발신자와 채팅방 별칭을 등록합니다.</p>
 
-      <h3>발신자 등록<span class="tag tag--req">필수</span></h3>
 
       <div class="cal cal--must">
         <b class="cal-h">이 단계를 건너뛰면 모든 문자가 차단됩니다.</b>
@@ -1165,8 +1192,10 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
           여기에 아무것도 없거나 값이 틀리면, 문자를 아무리 보내도 조용히 거부됩니다.</p>
       </div>
 
-      <p><a href="#s15">15 부록 · 매크로를 직접 만들기</a>에서 권장한 대로 <b>SMS 수신</b> 방식을 골랐다면
-        <b>문자를 보낼 휴대폰의 전화번호</b>를 그대로 적으면 됩니다. 이것으로 끝입니다.</p>
+      <p><a href="#s2">02 PC에 설치하기</a>에서 넣은 번호가 여기에 이미 들어가 있습니다.
+        <b>한 번 열어서 맞는지만 확인하세요.</b> 비어 있거나 다르면 고칩니다.</p>
+      <p>넣을 값은 <b>문자를 보낼 휴대폰의 전화번호</b>입니다.
+        <a href="#s4">04 중계 휴대폰 설정</a>에서 매크로에 적은 번호와 같은 번호여야 합니다.</p>
 
       <div class="codewrap">
 <pre>"allowFrom": ["01012345678"]</pre>
@@ -1207,8 +1236,27 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
           <b>설정 편집</b>을 누르면 버튼 이름이 <b>설정 적용</b>으로 바뀌어 있습니다.</p>
       </div>
 
-      <p>채팅방 별칭이나 답장 끄기 같은 나머지 설정은
-        <a href="#s11">11 설정 바꾸기</a>에 있습니다. 지금 하지 않아도 됩니다.</p>
+      <h3>채팅방 이름이 길거나 띄어쓰기가 있다면<span class="tag tag--opt">선택</span></h3>
+      <p>문자는 <b>맨 처음 띄어쓰기</b>까지를 채팅방 이름으로 읽습니다.
+        그래서 <code>개발팀 단톡방</code>처럼 이름에 띄어쓰기가 있으면 그대로는 찾지 못합니다.
+        짧은 이름을 따로 정해 두면 편합니다.</p>
+      <div class="codewrap">
+<pre>"aliases": {
+  "팀": "개발팀 단톡방",
+  "엄마": "김영희"
+}</pre>
+      </div>
+      <p>왼쪽이 <b>문자에 쓸 짧은 이름</b>, 오른쪽이 <b>카카오톡에 보이는 실제 채팅방 이름</b>입니다.
+        실제 이름은 띄어쓰기와 이모지까지 화면에 보이는 그대로여야 합니다.
+        이렇게 해 두면 <code>팀 회의합니다</code>로 보낼 수 있습니다.</p>
+
+      <div class="cal cal--tip">
+        <b class="cal-h">보낼 채팅방 이름을 미리 확인해 두세요.</b>
+        <p>다음 단계에서 시험 문자를 보내려면 채팅방 이름이 정확해야 합니다.
+          카카오톡을 열어 보낼 방의 이름을 그대로 적어 두세요.</p>
+      </div>
+
+      <p>답장 끄기 같은 나머지 설정은 <a href="#s11">11 설정 바꾸기</a>에 있습니다. 지금 하지 않아도 됩니다.</p>
     </section>
     <!-- ==================== 06 ==================== -->
     <section id="s6" aria-labelledby="s6h">
@@ -1219,8 +1267,8 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
 
       <div class="cal cal--must">
         <b class="cal-h">설치 직후에는 카카오톡으로 아무것도 전송되지 않습니다.</b>
-        <p>설정 파일의 <code>dryRun</code> 값이 처음에는 <code>true</code>로 되어 있습니다.
-          이 상태에서는 릴레이가 문자를 받아 채팅방을 찾는 데까지만 하고 실제 전송은 하지 않습니다.</p>
+        <p>설치 직후에는 <b>시험 모드</b>라서, 릴레이가 문자를 받아 채팅방을 찾는 데까지만 하고
+          실제 전송은 하지 않습니다.</p>
           <p>엉뚱한 채팅방으로 메시지가 나가는 사고를 막기 위한 안전장치입니다.</p>
         <p>아래 순서대로 경로를 먼저 확인한 뒤 실제 전송을 켜세요.</p>
       </div>
@@ -1229,16 +1277,18 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
         <li>
           <b>시험 문자 보내기</b>
           <p>발신 휴대폰에서 중계 휴대폰으로 아래와 같이 문자를 보내세요.
-            <code>테스트방</code> 자리에는 실제 채팅방 이름이나 등록한 별칭을 넣습니다.</p>
+            문자는 <b>채팅방 이름 · 한 칸 띄고 · 보낼 내용</b> 순서로 씁니다. 규칙은 이것 하나뿐입니다.
+            <code>테스트방</code> 자리에는 실제 채팅방 이름이나 등록한 별칭을 넣으세요.</p>
           <div class="codewrap">
 <pre>테스트방 연결 확인용 문자입니다</pre>
           </div>
         </li>
         <li>
           <b>로그 확인</b>
-          <p>조작 창에서 <b>기록 폴더</b>를 누르세요.
-            마지막 줄에 <code>DRYRUN 성공</code>이 보이면 문자가 정상적으로 도착해 채팅방까지 찾은 것입니다.</p>
-          <p><b>거부: 허용되지 않은 발신번호</b>가 보이면 <a href="#s5">05 발신자 등록</a>의 발신자 등록으로 돌아가세요.</p>
+          <p>조작 창에서 <b>기록 폴더</b>를 누르면 폴더가 열립니다.
+            그 안의 <code>relay.log</code>를 더블클릭해 메모장으로 열고 <b>맨 아래 줄</b>을 보세요.
+            <code>DRYRUN 성공</code>이 보이면 문자가 정상적으로 도착해 채팅방까지 찾은 것입니다.</p>
+          <p><b>거부: 허용되지 않은 발신번호</b>가 보이면 <a href="#s5">05 발신자 등록</a>으로 돌아가세요.</p>
         </li>
         <li>
           <b>어느 채팅방으로 갈지 확인</b>
@@ -1263,6 +1313,13 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
         </li>
       </ol>
 
+      <div class="cal cal--tip">
+        <b class="cal-h">여기까지가 설치입니다.</b>
+        <p>메시지가 도착했다면 끝났습니다. 이제부터는 문자를 보내기만 하면 됩니다.
+          평소 쓰는 방법은 <a href="#s7">07 문자 보내는 방법</a>에 있습니다.</p>
+        <p>메시지가 오지 않았다면 <a href="#s9">09 문제 해결</a>을 보세요.
+          그 전에 조작 창의 <b>상태 점검</b>을 먼저 눌러 보면, 문제가 있는 항목만 찾아 알려 줍니다.</p>
+      </div>
     </section>
     <!-- ==================== 07 ==================== -->
     <section id="s7" aria-labelledby="s7h">
@@ -1599,7 +1656,7 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
               <th scope="row">다른 채팅방으로 전송됨</th>
               <td>카카오톡 <b>설정 &gt; 채팅</b>에서 <b>채팅방을 새 창으로 열기</b>가 켜져 있는지 확인하세요.
                 꺼져 있으면 릴레이가 채팅방 이름을 대조하지 못합니다.
-                이름이 비슷한 채팅방이 여러 개라면 <a href="#s5">05 발신자 등록</a>을 등록해 정확한 이름을 지정하세요.</td>
+                이름이 비슷한 채팅방이 여러 개라면 <a href="#s5">05 발신자 등록</a>에서 별칭을 등록해 정확한 이름을 지정하세요.</td>
             </tr>
             <tr>
               <th scope="row">설정을 고쳤는데 그대로임</th>
@@ -2040,7 +2097,7 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
         <h2 id="s15h">부록 · 매크로를 직접 만들기</h2>
       </div>
 
-      <p><a href="#s3">03 연결 확인</a>에서 매크로 파일을 가져왔다면 이 절은 읽지 않아도 됩니다.
+      <p><a href="#s4">04 중계 휴대폰 설정</a>에서 매크로 파일을 가져왔다면 이 절은 읽지 않아도 됩니다.
         직접 만들어 보거나, 무엇이 어떻게 돌아가는지 알고 싶을 때만 보세요.</p>
 
       <h3>문자를 잡는 두 가지 방법</h3>
@@ -2118,7 +2175,7 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
         <p>URL 끝의 <code>&amp;reply=text</code>는 아래 <b>결과를 문자로 돌려받기</b>에 필요합니다.
           그 기능을 쓰지 않더라도 붙여 두면 됩니다.</p>
 
-        <h3>매크로를 직접 만들기</h3>
+        <h3>결과를 문자로 돌려받기</h3>
       <div class="cal cal--must">
         <b class="cal-h">이 설정을 하지 않으면 실패해도 보낸 사람은 전혀 알 수 없습니다.</b>
         <p>채팅방 이름이 틀렸든 PC가 꺼져 있든, 문자를 보낸 쪽에는 아무 반응이 없습니다.
@@ -2258,15 +2315,14 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
       <div class="cal cal--tip">
         <b class="cal-h">답장이 부담이면 꺼도 됩니다.</b>
         <p>답장 한 통마다 문자 요금이 듭니다.
-          <a href="#s5">05 발신자 등록</a>에서 <code>"smsReply": false</code>로 하면
+          <a href="#s11">11 설정 바꾸기</a>에서 <code>"smsReply": false</code>로 하면
           릴레이가 언제나 <code>[카톡] OK</code>만 돌려주므로 문자가 나가지 않습니다.
           중계 휴대폰 설정은 그대로 두어도 되고, <code>true</code>로 되돌리면 바로 다시 켜집니다.</p>
         <p>대신 대상이 무엇으로 지정됐는지와 전달 실패를 문자로는 알 수 없게 됩니다.
           지금 지정된 대상은 <b>카톡 릴레이</b> 창에서 확인할 수 있습니다.</p>
       </div>
     
-      <h3>알림 트리거 <span class="tag tag--req">권장하지 않음</span></h3>
-<h4>알림 <span class="tag tag--req">권장하지 않음</span></h4>
+      <h3>알림 트리거 <span class="tag tag--warn">권장하지 않음</span></h3>
         <dl class="fields">
           <div><dt>트리거 종류</dt><dd>알림(Notification)</dd></div>
           <div><dt>대상 앱</dt><dd>문자 메시지 앱 (<code>메시지</code> 등 실제 앱 이름)</dd></div>
