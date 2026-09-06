@@ -1047,24 +1047,17 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
           방화벽이나 자동 실행만 다시 손보고 싶을 때 마음 놓고 실행해도 됩니다.</p>
       </div>
 
-      <h3>설치가 끝나면 표시되는 값</h3>
-      <p>설치가 끝나면 아래 값이 화면에 표시되고, 압축을 푼 폴더의 <code>설치결과.txt</code>에 저장되어 메모장으로 열립니다. 표시되는 값은 다음 단계에서 중계 휴대폰에 그대로 입력할 값이므로 적어 두세요.</p>
+      <h3>설치가 끝나면 나오는 IP 주소</h3>
+      <p>설치가 끝나면 <b>이 PC 의 IP 주소</b>가 화면에 표시되고,
+        압축을 푼 폴더의 <code>설치결과.txt</code>에도 저장되어 메모장으로 열립니다.
+        <b>다음 단계에서 쓸 값은 이것 하나</b>이니 적어 두세요.</p>
 
       <p class="iprow">
-        <label for="ipin">화면에 표시된 IP 주소를 입력하면 이 문서의 주소가 모두 채워집니다.</label>
+        <label for="ipin">여기에 넣으면 이 문서에 나오는 주소가 모두 그 값으로 채워집니다.</label>
         <input id="ipin" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="192.168.0.10">
       </p>
 
-      <dl class="fields">
-        <div><dt>트리거</dt><dd>SMS 수신</dd></div>
-        <div><dt>URL</dt><dd>http://<span data-ip>내 IP 주소</span>:8787/sms?from=<b>[SMS 번호]</b>&amp;reply=text</dd></div>
-        <div><dt>요청 방식</dt><dd>POST</dd></div>
-        <div><dt>콘텐츠 유형</dt><dd>text/plain</dd></div>
-        <div><dt>본문</dt><dd><b>[SMS 메시지]</b></dd></div>
-        <div><dt>제한 시간</dt><dd>120초</dd></div>
-      </dl>
-
-      <p>포트 <code>8787</code>은 기본값입니다. 설치 화면에 다른 번호가 표시되었다면 그 번호를 사용하세요.</p>
+      <p>포트 <code>8787</code>은 기본값입니다. 설치 화면에 다른 번호가 표시되었다면 그 번호를 쓰세요.</p>
     </section>
     <!-- ==================== 03 ==================== -->
     <section id="s3" aria-labelledby="s3h">
@@ -1144,7 +1137,7 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
         <p>문자가 오면 그 내용을 PC 로 넘기고, 릴레이가 돌려준 답을 다시 문자로 보내 줍니다.
           대상을 바꿨거나 전달에 실패했을 때만 답장이 오고, 잘 전달되면 아무것도 오지 않습니다.
           답장 한 통마다 문자 요금이 듭니다.</p>
-        <p>답장이 필요 없으면 <a href="#s12">12 보안과 개인정보</a>에서 끌 수 있습니다.
+        <p>답장이 필요 없으면 <a href="#s11">11 설정 바꾸기</a>에서 끌 수 있습니다.
           직접 만들어 보거나 어떻게 돌아가는지 알고 싶다면 <a href="#s15">15 부록</a>을 보세요.</p>
       </div>
 
@@ -1215,7 +1208,7 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
       </div>
 
       <p>채팅방 별칭이나 답장 끄기 같은 나머지 설정은
-        <a href="#s12">12 보안과 개인정보</a>에 있습니다. 지금 하지 않아도 됩니다.</p>
+        <a href="#s11">11 설정 바꾸기</a>에 있습니다. 지금 하지 않아도 됩니다.</p>
     </section>
     <!-- ==================== 06 ==================== -->
     <section id="s6" aria-labelledby="s6h">
