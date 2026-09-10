@@ -1078,7 +1078,7 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
           <b>마우스 오른쪽 버튼 클릭 &gt; PowerShell로 실행</b>하세요.
           권한 창이 나타나면 <b>[예]</b>를 선택하세요.
           기존 설정은 덮어쓰지 않습니다.</li>
-        <li><code>접속 거부</code>가 표시되면 PC에는 연결되었지만 IP가 허용 목록에 없는 상태입니다.
+        <li><code>허용되지 않은 기기</code>가 표시되면 PC에는 연결되었지만 IP가 허용 목록에 없는 상태입니다.
           <a href="#s9">09 문제 해결</a>을 참고해 <code>allowIPs</code>를 수정하세요.</li>
       </ul>
     </section>
@@ -1427,7 +1427,7 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
         친구 목록에도 없는 이름이면 전송에 실패합니다.
         단톡방은 친구 목록에 없으므로 <b>채팅방 이름</b>을 그대로 써야 합니다.</p>
 
-      <h3>전송 순서와 중복 무시</h3>
+      <h3>전송 순서와 중복 방지</h3>
       <p>문자는 한 통씩 차례로 전송됩니다. 한 통에 약 5초가 걸립니다.
         릴레이는 받은 순서대로 하나씩 처리하므로, 연달아 보내면 그만큼 뒤로 밀립니다.
         세 통을 연달아 보내면 마지막 문자는 약 15초 뒤에 전송됩니다. 순서는 보낸 순서 그대로입니다.</p>
@@ -1548,64 +1548,63 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
       </div>
 
       <h3>문자로 받은 문구로 찾기</h3>
-      <p>릴레이가 보내는 답장은 모두 <code>[카톡]</code>으로 시작합니다. 받은 문자의 <b>첫 줄</b>을 아래에서 찾으세요.</p>
+      <p>릴레이가 보내는 답장은 모두 <code>[카톡]</code>으로 시작합니다. 첫 줄은 결과, 둘째 줄은 원인이나 채팅방, 셋째 줄은 조치입니다. 받은 문자의 <b>첫 두 줄</b>을 아래에서 찾으세요.</p>
       <div class="tw">
         <table>
           <thead>
             <tr><th scope="col"><code>[카톡]</code> 뒤에 오는 문구</th><th scope="col">뜻</th><th scope="col">할 일</th></tr>
           </thead>
           <tbody>
-            <tr><th scope="row"><code>PC 응답 없음</code></th>
+            <tr><th scope="row"><code>전송 실패</code><br><code>원인: PC 응답 없음</code></th>
               <td>중계 휴대폰까지는 갔지만 PC에 닿지 못했습니다</td>
               <td>PC가 켜져 있고 절전이 아닌지, 두 기기가 같은 Wi-Fi인지 확인하세요.
                 그래도 안 되면 매크로 URL의 IP 주소가 지금 PC 주소와 같은지 보세요
                 (<a href="#s4">04 중계 휴대폰 설정</a>)</td></tr>
-            <tr><th scope="row"><code>접속 거부</code></th>
-              <td>PC까지는 닿았지만 IP가 허용 목록에 없습니다</td>
-              <td><b>설정 편집</b>에서 <code>allowIPs</code>에 중계 휴대폰이 속한 대역을
-                <code>"192.168.0.*"</code> 형태로 추가하세요.
-                지금 허용된 대역은 <b>상태 점검</b>의 <b>허용 접속 대역</b>에서 볼 수 있습니다</td></tr>
-            <tr><th scope="row"><code>전송 실패</code><br><code>카카오톡 준비 안 됨</code></th>
+            <tr><th scope="row"><code>전송 실패</code><br><code>원인: 카카오톡 미응답</code></th>
               <td>카카오톡을 조작하지 못했습니다. <b>채팅방 이름 문제가 아닙니다.</b></td>
               <td>카카오톡이 실행 중이고 로그인되어 있는지, 카카오톡 화면잠금이 꺼져 있는지,
                 Windows 화면이 잠기지 않았는지 확인하세요. 그래도 안 되면 잠시 뒤 다시 보내세요</td></tr>
-            <tr><th scope="row"><code>전송 실패</code><br><code>OOO → 채팅방 없음</code></th>
+            <tr><th scope="row"><code>전송 실패</code><br><code>OOO: 채팅방 없음</code></th>
               <td>그 이름의 채팅방을 찾지 못했습니다</td>
               <td>카카오톡에 보이는 이름 그대로 적었는지 확인하세요. 특수문자도 빠짐없이 적으세요
                 (<a href="#s7">07 문자 보내는 방법</a>)</td></tr>
-            <tr><th scope="row"><code>대상 변경 실패</code><br><code>OOO → 채팅방 없음</code></th>
-              <td>대상을 바꾸지 못했습니다. <b>직전 대상이 그대로 남아 있습니다</b></td>
-              <td>이름을 고쳐 다시 <code>@</code>로 보내세요.
-                지금 대상은 <b>조작 창</b>의 상태 줄에서 볼 수 있습니다</td></tr>
-            <tr><th scope="row"><code>중복 무시</code></th>
-              <td>5분 안에 <b>똑같은 내용</b>을 다시 보냈습니다. 두 번째는 보내지 않았습니다</td>
-              <td>내용을 조금 바꿔 다시 보내세요. 일부러 같은 문장을 반복해야 한다면
-                <a href="#s11">11 설정 바꾸기</a>의 <code>dedupeSeconds</code>를 줄이세요</td></tr>
-            <tr><th scope="row"><code>보냄</code><br><code>엄마 → 엄마들 모임</code></th>
-              <td>보내긴 했지만 <b>이름이 정확하지 않아 비슷한 채팅방으로</b> 갔습니다</td>
-              <td>표시된 채팅방이 맞는지 확인하세요. 다르면 이름을 더 정확히 적거나 별칭을 등록하세요</td></tr>
-            <tr><th scope="row"><code>일시 중지</code></th>
-              <td>문자 전달이 멈춰 있습니다</td>
-              <td>바탕 화면의 <b>카톡 릴레이</b>를 열고 <b>문자 전달 다시 시작</b>을 누르세요</td></tr>
-            <tr><th scope="row"><code>새 창 열기 필요</code></th>
+            <tr><th scope="row"><code>전송 실패</code><br><code>원인: 새 창 열기 꺼짐</code></th>
               <td>카카오톡이 채팅방을 메인창 안에서 열어 이름을 대조하지 못합니다</td>
               <td>카카오톡 <b>설정 &gt; 채팅</b>에서 <b>채팅방을 새 창으로 열기</b>를 켜세요</td></tr>
-            <tr><th scope="row"><code>지정된 대상 없음</code></th>
-              <td>지정해 둔 대상이 없어 첫 단어를 채팅방 이름으로 씁니다. 문제가 생긴 것은 아닙니다</td>
+            <tr><th scope="row"><code>전송 실패</code><br><code>원인: PC 내부 오류</code></th>
+              <td>릴레이 안에서 예상하지 못한 오류가 났습니다</td>
+              <td>조작 창의 <b>기록 폴더</b>에서 <code>relay.log</code> 마지막 줄을 확인하세요</td></tr>
+            <tr><th scope="row"><code>전송 완료</code><br><code>엄마 → 엄마들 모임</code></th>
+              <td>보내긴 했지만 <b>이름이 정확하지 않아 비슷한 채팅방으로</b> 갔습니다. 셋째 줄에 <code>참고: 유사 이름</code>이 붙습니다</td>
+              <td>표시된 채팅방이 맞는지 확인하세요. 다르면 이름을 더 정확히 적거나 별칭을 등록하세요</td></tr>
+            <tr><th scope="row"><code>전송 생략</code><br><code>중복 수신 · 이미 전송됨</code></th>
+              <td>같은 문자가 정해진 시간(기본 5분) 안에 한 번 더 들어왔습니다. <b>카카오톡에는 이미 한 번 보냈습니다</b></td>
+              <td>따로 할 일은 없습니다. 같은 문장을 일부러 두 번 보내려면 내용을 조금 바꾸거나
+                <a href="#s11">11 설정 바꾸기</a>의 <code>dedupeSeconds</code>를 줄이세요</td></tr>
+            <tr><th scope="row"><code>전송 보류</code><br><code>원인: 릴레이 일시 중지</code></th>
+              <td>문자 전달이 멈춰 있습니다</td>
+              <td>바탕 화면의 <b>카톡 릴레이</b>를 열고 <b>문자 전달 다시 시작</b>을 누르세요</td></tr>
+            <tr><th scope="row"><code>대상 변경 실패</code><br><code>OOO: 채팅방 없음</code></th>
+              <td>대상을 바꾸지 못했습니다. <b>셋째 줄 <code>현재:</code>의 대상이 그대로 남아 있습니다</b></td>
+              <td>이름을 고쳐 다시 <code>@</code>로 보내세요</td></tr>
+            <tr><th scope="row"><code>대상 해제 생략</code><br><code>지정된 대상 없음</code></th>
+              <td>풀 대상이 없었습니다. 문제가 생긴 것은 아닙니다</td>
               <td>대상을 정하려면 <code>@</code> 뒤에 채팅방 이름을 붙여 보내세요</td></tr>
-            <tr><th scope="row"><code>채팅방 이름 없음</code><br><code>보낼 내용 없음</code><br><code>형식 오류</code></th>
+            <tr><th scope="row"><code>요청 거부</code><br><code>원인: 형식 오류 · 내용 없음</code></th>
               <td>문자 형식이 맞지 않습니다</td>
               <td><code>채팅방 내용</code>처럼 <b>첫 띄어쓰기</b>로 구분해 보내세요
                 (<a href="#s7">07 문자 보내는 방법</a>)</td></tr>
-            <tr><th scope="row"><code>비밀번호 틀림</code></th>
+            <tr><th scope="row"><code>요청 거부</code><br><code>원인: 허용되지 않은 기기</code></th>
+              <td>PC까지는 닿았지만 중계 휴대폰의 IP가 허용 목록에 없습니다</td>
+              <td><b>설정 편집</b>에서 <code>allowIPs</code>에 중계 휴대폰이 속한 대역을
+                <code>"192.168.0.*"</code> 형태로 추가하세요.
+                지금 허용된 대역은 <b>상태 점검</b>의 <b>허용 접속 대역</b>에서 볼 수 있습니다</td></tr>
+            <tr><th scope="row"><code>요청 거부</code><br><code>원인: 비밀번호 불일치</code></th>
               <td>비밀번호를 켜 두었는데 맨 앞 단어가 다릅니다</td>
               <td><code>비밀번호 채팅방 내용</code> 순서로 보내세요</td></tr>
-            <tr><th scope="row"><code>주소 오류</code></th>
+            <tr><th scope="row"><code>요청 거부</code><br><code>원인: 잘못된 주소</code></th>
               <td>매크로 URL이 <code>/sms</code>가 아닙니다</td>
               <td><a href="#s4">04 중계 휴대폰 설정</a>의 URL과 대조하세요</td></tr>
-            <tr><th scope="row"><code>처리 중 오류</code></th>
-              <td>릴레이 안에서 예상하지 못한 오류가 났습니다</td>
-              <td>조작 창의 <b>기록 폴더</b>에서 <code>relay.log</code> 마지막 줄을 확인하세요</td></tr>
             <tr><th scope="row">아무 문자도 오지 않음</th>
               <td>문자가 잘 전달되었거나, 릴레이까지 오지 못했습니다</td>
               <td>아래 <b>아무 반응도 없을 때</b>를 보세요</td></tr>
@@ -1668,7 +1667,7 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
                 <b>설정 &gt; 네트워크 및 인터넷 &gt; 속성 &gt; 네트워크 프로필 유형</b>에서 <b>개인</b>을 선택하세요.</td>
             </tr>
             <tr>
-              <th scope="row">접속 거부 답장을 받음</th>
+              <th scope="row"><code>허용되지 않은 기기</code> 답장을 받음</th>
               <td><b>설정 편집</b>으로 설정 파일을 열고 <code>allowIPs</code>에 중계 휴대폰이 속한 대역을 추가하세요.
                 <code>"192.168.0.*"</code>처럼 끝자리를 <code>*</code>로 적습니다.
                 공유기를 바꿔 대역이 달라졌다면 이 값을 다시 고치세요.
@@ -2204,7 +2203,7 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
             <tr><th scope="row">채팅방을 찾지 못함 · 전달 실패</th><td>실패한 이유</td><td>문자로 알림</td></tr>
             <tr><th scope="row">일시 중지 상태</th><td>일시 중지 안내</td><td>문자로 알림</td></tr>
             <tr><th scope="row">PC 꺼짐 · Wi-Fi 끊김</th><td><b>응답 없음</b> (<code>[카톡]</code>도 붙지 않음)</td><td>문자로 알림</td></tr>
-            <tr><th scope="row">5분 안에 같은 문자를 또 보냄</th><td>중복 무시 안내</td><td>문자로 알림</td></tr>
+            <tr><th scope="row">5분 안에 같은 문자를 또 보냄</th><td>이미 보냈다는 안내</td><td>문자로 알림</td></tr>
             <tr><th scope="row">이름 앞부분만 맞아 비슷한 채팅방으로 감</th><td>어느 채팅방으로 갔는지</td><td>문자로 알림</td></tr>
             <tr><th scope="row">등록하지 않은 번호</th><td><code>[카톡] OK</code></td><td>문자 없음</td></tr>
           </tbody>
@@ -2216,23 +2215,22 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
 
       <p><code>@</code>로 대상을 다룰 때는 <b>무엇이 달라졌는지</b>에 따라 답장이 달라집니다.</p>
       <div class="codewrap">
-<pre>@엄마    → [카톡] 대상 지정
+<pre>@엄마    → [카톡] 대상 지정 완료
            엄마
-           풀려면 @ 한 글자
+           해제: @ 전송
 
-@형      → [카톡] 대상 변경
+@형      → [카톡] 대상 변경 완료
            엄마 → 형
 
-@엄마    → [카톡] 대상 그대로
-           엄마
-
-@        → [카톡] 대상 해제
-           엄마 → 해제
-           이제 첫 단어가 채팅방
+@형      → [카톡] 대상 유지
+           형 (이미 지정됨)
 
 @없는방   → [카톡] 대상 변경 실패
-           없는방 → 채팅방 없음
-           대상 그대로 엄마</pre>
+           없는방: 채팅방 없음
+           현재: 형
+
+@        → [카톡] 대상 해제 완료
+           형 → 없음</pre>
       </div>
 
       <p>릴레이가 돌려주는 답장은 모두 <code>[카톡]</code>으로 시작합니다.
@@ -2267,10 +2265,13 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
             <code>[카톡]</code>을 <b>포함하지 않음</b></p>
           <p>그 안에 <b>변수 설정</b> 액션을 넣고, <code>답장</code>에 아래 문장을 넣으세요.</p>
           <div class="codewrap">
-<pre>[카톡] PC 응답 없음 · 전원/Wi-Fi 확인</pre>
+<pre>[카톡] 전송 실패
+원인: PC 응답 없음
+조치: 전원·Wi-Fi 확인</pre>
           </div>
-          <p>릴레이가 보내는 <code>[카톡] 전송 실패</code>는 <b>PC는 켜져 있는데 카카오톡 조작이 실패한 경우</b>입니다.
-            첫 줄을 다르게 두면 어느 쪽인지 한눈에 알 수 있습니다.</p>
+          <p>세 줄로 나누어 입력하세요. 릴레이가 보내는 실패 답장과 양식을 맞춘 것입니다.
+            둘째 줄이 <code>원인: PC 응답 없음</code>이면 PC까지 닿지 못한 것이고,
+            그 밖의 원인은 <b>PC는 켜져 있는데 카카오톡 조작이 실패한 경우</b>입니다.</p>
           <p><b>조건문 종료</b>로 닫으세요.</p>
         </li>
         <li><b>알려 줄 일이 있을 때만 문자 보내기</b>
@@ -2302,7 +2303,7 @@ p b,li b,td b,dd b,.u{white-space:nowrap}
 1  변수 설정      답장 = 없음
 2  HTTP 요청      ...&amp;reply=text   응답 → [답장]
 3  조건문 IF      답장 이(가) [카톡]을 포함하지 않음
-4    변수 설정    답장 = [카톡] PC 응답 없음 · 전원/Wi-Fi 확인
+4    변수 설정    답장 = [카톡] 전송 실패 / 원인: PC 응답 없음 / …
 5  조건문 종료
 6  조건문 IF      답장 이(가) [카톡] OK와 같지 않음
 7    SMS 보내기   [SMS 번호] / [답장]

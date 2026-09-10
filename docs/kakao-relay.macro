@@ -219,7 +219,7 @@
         "m_newBooleanValue": false,
         "m_newDoubleValue": 0.0,
         "m_newIntValue": 0,
-        "m_newStringValue": "[카톡] PC 응답 없음 · 전원/Wi-Fi 확인",
+        "m_newStringValue": "[카톡] 전송 실패\n원인: PC 응답 없음\n조치: 전원·Wi-Fi 확인",
         "m_trueLabel": "true",
         "m_userPrompt": false,
         "m_userPromptEmptyAtStart": false,

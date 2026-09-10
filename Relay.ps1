@@ -358,11 +358,11 @@ function Parse-Command {
 
     if ($needPw) {
         $i = $body.IndexOf(' ')
-        if ($i -lt 1) { return @{ ok=$false; error="형식 오류`n$fmt`n띄어쓰기로 구분" } }
+        if ($i -lt 1) { return @{ ok=$false; error="요청 거부`n원인: 형식 오류`n형식: $fmt" } }
         # -ne 는 대소문자를 무시한다. 비밀번호는 구분해야 하므로 -cne 를 쓴다.
-        if ($body.Substring(0, $i).Trim() -cne $cfg.password) { return @{ ok=$false; error='비밀번호 틀림' + [char]10 + '맨 앞 단어가 비밀번호' } }
+        if ($body.Substring(0, $i).Trim() -cne $cfg.password) { return @{ ok=$false; error='요청 거부' + [char]10 + '원인: 비밀번호 불일치' } }
         $body = $body.Substring($i + 1).Trim()
-        if (-not $body) { return @{ ok=$false; error="보낼 내용 없음`n비밀번호만 왔음" } }
+        if (-not $body) { return @{ ok=$false; error="요청 거부`n원인: 내용 없음`n형식: $fmt" } }
     }
 
     <#
@@ -409,17 +409,17 @@ function Parse-Command {
           사실과 반대였다. 사용자는 멀쩡한 이름을 의심하게 된다.
         #>
         if ($body -notmatch '\s') {
-            return @{ ok=$false; error="보낼 내용 없음`n채팅방 이름만 왔음`n뒤에 내용을 붙여 보내기" }
+            return @{ ok=$false; error="요청 거부`n원인: 내용 없음`n형식: 채팅방 내용" }
         }
         $r = Split-RoomAndText $body
         if (-not $r.room) {
-            return @{ ok=$false; error="채팅방 이름 없음`n채팅방 내용  또는  @채팅방`n띄어쓰기로 구분" }
+            return @{ ok=$false; error="요청 거부`n원인: 형식 오류`n형식: 채팅방 내용" }
         }
         $room = $r.room
         $text = $r.text
     }
 
-    if ([string]::IsNullOrWhiteSpace($text)) { return @{ ok=$false; error="보낼 내용 없음`n채팅방 이름만 왔음`n뒤에 내용을 붙여 보내기" } }
+    if ([string]::IsNullOrWhiteSpace($text)) { return @{ ok=$false; error="요청 거부`n원인: 내용 없음`n형식: 채팅방 내용" } }
     return @{ ok=$true; room=$room; text=$text.Trim() }
 }
 
@@ -726,7 +726,7 @@ function Handle-Sms {
         # silent: 답장 문자를 보내지 않는다.
         # 모르는 번호에서 온 문자에 답장하면 엉뚱한 사람에게 문자가 가고 요금도 나간다.
         return @{ ok = $false; retryable = $false; silent = $true
-                  error = '발신자 미등록' + [char]10 + 'PC 설정의 allowFrom 확인' }
+                  error = '요청 거부' + [char]10 + '원인: 미등록 발신자' }
     }
 
     $dedupeKey = Get-DedupeKey -From $from -Text $text
@@ -737,7 +737,7 @@ function Handle-Sms {
           성공에도 답장이 없으므로, 답장이 없다는 것만으로는 구분할 수 없다.
         #>
         return @{ ok = $true; error = $null; duplicate = $true; retryable = $false
-                  reply = '중복 무시' + [char]10 + '조금 전과 같은 문자' + [char]10 + '내용을 바꿔 다시 보내기' }
+                  reply = '전송 생략' + [char]10 + '중복 수신 · 이미 전송됨' }
     }
 
     $joinMs = if ($cfg.PSObject.Properties.Name -contains 'joinWindowMs') { [int]$cfg.joinWindowMs } else { 0 }
@@ -759,8 +759,8 @@ function Handle-Sms {
     if ($cmd.pinAction -eq 'clear') {
         Clear-Pin $from
         Write-Log "대상 해제 (이전 [$before])" 'INFO'
-        $say = if ($before) { '대상 해제' + $nl + (Format-RoomForSms $before) + " $arrow 해제" + $nl + '이제 첫 단어가 채팅방' }
-               else         { '지정된 대상 없음' + $nl + '첫 단어가 채팅방 이름' }
+        $say = if ($before) { '대상 해제 완료' + $nl + (Format-RoomForSms $before) + " $arrow 없음" }
+               else         { '대상 해제 생략' + $nl + '지정된 대상 없음' }
         return @{ ok = $true; error = $null; pinned = $null; retryable = $false; reply = $say }
     }
     if ($cmd.pinAction -eq 'set') {
@@ -788,10 +788,10 @@ function Handle-Sms {
             $missing = if ($onlyPin) { [bool]$chk.missing } else { -not [bool]$sendRes.retryable }
             Write-Log "대상 지정 안 함 - [$($cmd.room)] 확인 실패: $why" 'WARN'
             $say = if ($missing) {
-                       $keep = if ($before) { '대상 그대로 ' + (Format-RoomForSms $before) } else { '지정된 대상 없음' }
-                       '대상 변경 실패' + $nl + (Format-RoomForSms $cmd.room) + " $arrow 채팅방 없음" + $nl + $keep
+                       $keep = if ($before) { '현재: ' + (Format-RoomForSms $before) } else { '현재: 없음' }
+                       '대상 변경 실패' + $nl + (Format-RoomForSms $cmd.room) + ': 채팅방 없음' + $nl + $keep
                    } else {
-                       '대상 변경 실패' + $nl + '카카오톡 준비 안 됨' + $nl + '잠시 후 다시 보내기'
+                       '대상 변경 실패' + $nl + '원인: 카카오톡 미응답' + $nl + '조치: 잠시 후 재전송'
                    }
             return @{ ok = $false; error = $why; pinned = $before; retryable = $ret; reply = $say }
         }
@@ -799,12 +799,12 @@ function Handle-Sms {
         Set-Pin $from $real
         Write-Log ("대상 지정 -> [{0}] ({1})" -f $real, $(if ($before) { "이전 [$before]" } else { '처음 지정' })) 'INFO'
         $rs = Format-RoomForSms $real
-        $say = if (-not $before)          { '대상 지정' + $nl + $rs + $nl + '풀려면 @ 한 글자' }
-               elseif ($before -eq $real) { '대상 그대로' + $nl + $rs }
-               else                       { '대상 변경' + $nl + (Format-RoomForSms $before) + " $arrow $rs" }
+        $say = if (-not $before)          { '대상 지정 완료' + $nl + $rs + $nl + '해제: @ 전송' }
+               elseif ($before -eq $real) { '대상 유지' + $nl + $rs + ' (이미 지정됨)' }
+               else                       { '대상 변경 완료' + $nl + (Format-RoomForSms $before) + " $arrow $rs" }
 
         if ($onlyPin) { return @{ ok = $true; error = $null; pinned = $real; retryable = $false; reply = $say } }
-        $sendRes['reply'] = if ($sendRes.ok) { $say } else { $say + $nl + '문자는 못 보냄' }
+        $sendRes['reply'] = if ($sendRes.ok) { $say } else { $say + $nl + '문자: 전송 실패' }
         return $sendRes
     }
 
@@ -840,13 +840,13 @@ function Handle-Sms {
       지금은 끝내 모른 채 지나간다.
     #>
     if ($r.ok -and $r.approx -and $r.room -and ($r.room -ne $cmd.room)) {
-        $r['reply'] = '보냄' + $nl + (Format-RoomForSms $cmd.room) + " $arrow " + (Format-RoomForSms $r.room) + $nl + '이름이 정확하지 않아 비슷한 방으로'
+        $r['reply'] = '전송 완료' + $nl + (Format-RoomForSms $cmd.room) + " $arrow " + (Format-RoomForSms $r.room) + $nl + '참고: 유사 이름'
     }
     if (-not $r.ok) {
         # 문자로 나가는 답은 짧게 줄인다. 자세한 사유는 기록에 남는다.
         # retryable 이 아니면 방을 못 찾은 것이다(Invoke-Send 참고).
-        $r['reply'] = if ($r.retryable) { '전송 실패' + $nl + '카카오톡 준비 안 됨' + $nl + '잠시 후 다시 보내기' }
-                      else                { '전송 실패' + $nl + (Format-RoomForSms $cmd.room) + " $arrow 채팅방 없음" }
+        $r['reply'] = if ($r.retryable) { '전송 실패' + $nl + '원인: 카카오톡 미응답' + $nl + '조치: 잠시 후 재전송' }
+                      else                { '전송 실패' + $nl + (Format-RoomForSms $cmd.room) + ': 채팅방 없음' }
     }
     return $r
 }
@@ -944,7 +944,7 @@ function Test-KakaoRoom {
     #>
     if ($res.ok -and $res.unverified) {
         return @{ ok = $false; room = $null; missing = $false; retryable = $true
-                  error = '새 창 열기 필요' + [char]10 + '카카오톡 설정 > 채팅에서 켜기' }
+                  error = '전송 실패' + [char]10 + '원인: 새 창 열기 꺼짐' + [char]10 + '조치: 카카오톡 설정 > 채팅' }
     }
     if ($res.ok) { return @{ ok = $true; room = $res.room; error = $null; retryable = $false; missing = $false } }
     <#
@@ -1310,7 +1310,7 @@ try {
 
             if (-not (Test-AllowedIP $peer)) {
                 Write-Log "거부: 허용되지 않은 접속 IP $peer  ($($req.Method) $($req.Url))" 'WARN'
-                $msg = "접속 거부`n같은 공유기인지 확인`n[상태 점검]으로 허용 대역 보기"
+                $msg = "요청 거부`n원인: 허용되지 않은 기기`n조치: PC 허용 대역 확인"
                 Send-HttpResponse -stream $req.Stream -Status $(if ($plain) { 200 } else { 403 }) -PlainText:$plain `
                     -Payload @{ ok=$false; error=$msg; reply=$msg; retryable=$false }
                 $client.Close()
@@ -1416,16 +1416,16 @@ try {
                     Write-Log "거부: 허용되지 않은 발신번호 '$($f.from)'" 'WARN'
                     Send-HttpResponse -stream $req.Stream -Status 200 -PlainText:$plain `
                         -Payload @{ ok=$false; silent=$true; retryable=$false
-                                    error='발신자 미등록' + [char]10 + 'PC 설정의 allowFrom 확인' }
+                                    error='요청 거부' + [char]10 + '원인: 미등록 발신자' }
                 }
                 elseif (Test-Paused) {
                     Write-Log "일시 중지 상태라 전달하지 않음: '$($f.text)'" 'WARN'
-                    $msg = "일시 중지`n[카톡 릴레이] 창에서 다시 시작"
+                    $msg = "전송 보류`n원인: 릴레이 일시 중지`n조치: PC에서 재개"
                     Send-HttpResponse -stream $req.Stream -Status 200 -PlainText:$plain -Payload @{
                         ok=$false; paused=$true; retryable=$false; error=$msg; reply=$msg }
                 }
                 elseif (-not $f.text) {
-                    $msg = '내용 없음'
+                    $msg = "요청 거부`n원인: 내용 없음"
                     # 답장 모드는 언제나 200 이다. 400 을 돌려주면 중계 휴대폰이 요청 실패로 보고
                     # 응답 변수를 제 오류 메시지로 덮어써, 표식 없는 값이 문자로 나간다.
                     $code = if ($plain) { 200 } else { 400 }
@@ -1452,7 +1452,7 @@ try {
                 }
             }
             else {
-                $msg = "주소 오류`n/sms로 보내야 합니다"
+                $msg = "요청 거부`n원인: 잘못된 주소`n조치: 매크로 URL 확인"
                 Send-HttpResponse -stream $req.Stream -Status $(if ($plain) { 200 } else { 404 }) -PlainText:$plain `
                     -Payload @{ ok=$false; error=$msg; reply=$msg }
             }
@@ -1475,7 +1475,7 @@ try {
                   무슨 일이 있어도 한 번은 답하고 끝낸다.
                 #>
                 try {
-                    $emsg = "처리 중 오류`n[기록 폴더]에서 확인"
+                    $emsg = "전송 실패`n원인: PC 내부 오류`n조치: PC 기록 확인"
                     Send-HttpResponse -stream $req.Stream -Status 200 -PlainText:$plain `
                         -Payload @{ ok=$false; retryable=$false; error=$emsg; reply=$emsg }
                 } catch { }
